@@ -31,7 +31,7 @@ namespace Lithnet.GoogleApps
             }
             else
             {
-                var x = JsonSerializer.Create();
+                JsonSerializer x = JsonSerializer.Create();
                 x.Serialize(writer, value);
 
                 //serializer.Serialize(writer, value);

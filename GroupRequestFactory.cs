@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps
 {
+    using Google.Apis.Admin.Directory.directory_v1;
+
     public static class GroupRequestFactory
     {
         static GroupRequestFactory()
@@ -49,10 +51,10 @@ namespace Lithnet.GoogleApps
 
             List<GoogleGroup> membersGroup = new List<GoogleGroup>();
 
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
-                var request = connection.Client.Groups.List();
+                GroupsResource.ListRequest request = connection.Client.Groups.List();
                 request.Customer = customerID;
                 request.MaxResults = 200;
                 request.Fields = groupFields;
@@ -70,7 +72,7 @@ namespace Lithnet.GoogleApps
                         break;
                     }
 
-                    foreach (var myGroup in pageResults.GroupsValue)
+                    foreach (Group myGroup in pageResults.GroupsValue)
                     {
                         GoogleGroup group = new GoogleGroup(myGroup);
                         GroupSettingsRequestFactory.AddJob(group);
@@ -149,15 +151,15 @@ namespace Lithnet.GoogleApps
 
         public static string Delete(string groupKey)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 try
                 {
-                    var request = connection.Client.Groups.Delete(groupKey);
+                    GroupsResource.DeleteRequest request = connection.Client.Groups.Delete(groupKey);
 //#if DEBUG
 //                    Logger.WriteLine("DELETE GROUP request: {0}", groupKey);
 //#endif
-                    var result = request.ExecuteWithBackoff();
+                    string result = request.ExecuteWithBackoff();
 //#if DEBUG
 //                    Logger.WriteLine("DELETE GROUP response: {0}", result);
 //#endif
@@ -174,15 +176,15 @@ namespace Lithnet.GoogleApps
 
         public static Group Add(Group item)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 try
                 {
-                    var request = connection.Client.Groups.Insert(item);
+                    GroupsResource.InsertRequest request = connection.Client.Groups.Insert(item);
 //#if DEBUG
 //                    Logger.WriteLine("ADD GROUP request: {0}", connection.Client.Serializer.Serialize(item));
 //#endif
-                    var result = request.ExecuteWithBackoff();
+                    Group result = request.ExecuteWithBackoff();
 //#if DEBUG
 //                    Logger.WriteLine("ADD GROUP response: {0}", connection.Client.Serializer.Serialize(result));
 //#endif
@@ -199,15 +201,15 @@ namespace Lithnet.GoogleApps
 
         public static Group Update(string groupKey, Group item)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 try
                 {
-                    var request = connection.Client.Groups.Update(item, groupKey);
+                    GroupsResource.UpdateRequest request = connection.Client.Groups.Update(item, groupKey);
 //#if DEBUG
 //                    Logger.WriteLine("UPDATE GROUP request: {0}", connection.Client.Serializer.Serialize(item));
 //#endif
-                    var result = request.ExecuteWithBackoff();
+                    Group result = request.ExecuteWithBackoff();
 //#if DEBUG
 //                    Logger.WriteLine("UPDATE GROUP response: {0}", connection.Client.Serializer.Serialize(result));
 //#endif
@@ -224,15 +226,15 @@ namespace Lithnet.GoogleApps
 
         public static Group Patch(string groupKey, Group item)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 try
                 {
-                    var request = connection.Client.Groups.Patch(item, groupKey);
+                    GroupsResource.PatchRequest request = connection.Client.Groups.Patch(item, groupKey);
 //#if DEBUG
 //                    Logger.WriteLine("PATCH GROUP request: {0}", connection.Client.Serializer.Serialize(item));
 //#endif
-                    var result = request.ExecuteWithBackoff();
+                    Group result = request.ExecuteWithBackoff();
 //#if DEBUG
 //                    Logger.WriteLine("PATCH GROUP response: {0}", connection.Client.Serializer.Serialize(result));
 //#endif
@@ -249,15 +251,15 @@ namespace Lithnet.GoogleApps
 
         public static Group Get(string groupKey)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 try
                 {
-                    var request = connection.Client.Groups.Get(groupKey);
+                    GroupsResource.GetRequest request = connection.Client.Groups.Get(groupKey);
 //#if DEBUG
 //                    Logger.WriteLine("GET GROUP request: {0}", groupKey);
 //#endif
-                    var result = request.ExecuteWithBackoff();
+                    Group result = request.ExecuteWithBackoff();
 //#if DEBUG
 //                    Logger.WriteLine("GET GROUP response: {0}", connection.Client.Serializer.Serialize(result));
 //#endif
@@ -274,12 +276,12 @@ namespace Lithnet.GoogleApps
 
         public static void AddAlias(string id, string newAlias)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 Alias alias = new Alias();
                 alias.AliasValue = newAlias;
 
-                var request = connection.Client.Groups.Aliases.Insert(alias, id);
+                GroupsResource.AliasesResource.InsertRequest request = connection.Client.Groups.Aliases.Insert(alias, id);
 
                 try
                 {
@@ -303,9 +305,9 @@ namespace Lithnet.GoogleApps
 
         public static void RemoveAlias(string id, string existingAlias)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                var request = connection.Client.Groups.Aliases.Delete(id, existingAlias);
+                GroupsResource.AliasesResource.DeleteRequest request = connection.Client.Groups.Aliases.Delete(id, existingAlias);
 
                 try
                 {
@@ -323,9 +325,9 @@ namespace Lithnet.GoogleApps
 
         public static IEnumerable<string> GetAliases(string id)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                var request = connection.Client.Groups.Aliases.List(id);
+                GroupsResource.AliasesResource.ListRequest request = connection.Client.Groups.Aliases.List(id);
 
                 try
                 {

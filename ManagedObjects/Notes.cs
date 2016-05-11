@@ -8,7 +8,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
 {
     public class Notes : IIsEmptyObject
     {
-        [JsonProperty("value")]
+        [JsonProperty("value"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Value { get; set; }
 
         [JsonProperty("contentType", NullValueHandling=NullValueHandling.Ignore)]

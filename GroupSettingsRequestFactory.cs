@@ -80,7 +80,7 @@ namespace Lithnet.GoogleApps
 
         public static GroupSettings Get(string groupKey)
         {
-            using (var connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
             {
                 try
                 {
@@ -88,7 +88,7 @@ namespace Lithnet.GoogleApps
 //#if DEBUG
 //                    Logger.WriteLine("GET GROUP SETTINGS request: {0}", groupKey);
 //#endif
-                    var result = request.ExecuteWithBackoff();
+                    GroupSettings result = request.ExecuteWithBackoff();
 //#if DEBUG
 //                    Logger.WriteLine("GET GROUP SETTINGS response: {0}", connection.Client.Serializer.Serialize(result));
 //#endif
@@ -105,7 +105,7 @@ namespace Lithnet.GoogleApps
 
         public static GroupSettings Update(string groupKey, GroupSettings item)
         {
-            using (var connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Include))
+            using (BaseClientServiceWrapper<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Include))
             {
                 try
                 {
@@ -113,7 +113,7 @@ namespace Lithnet.GoogleApps
 //#if DEBUG
 //                    Logger.WriteLine("UPDATE GROUP SETTINGS request: {0}", connection.Client.Serializer.Serialize(item));
 //#endif
-                    var result = request.ExecuteWithBackoff();
+                    GroupSettings result = request.ExecuteWithBackoff();
 //#if DEBUG
 //                    Logger.WriteLine("UPDATE GROUP SETTINGS response: {0}", connection.Client.Serializer.Serialize(result));
 //#endif
@@ -130,7 +130,7 @@ namespace Lithnet.GoogleApps
 
         public static GroupSettings Patch(string groupKey, GroupSettings item)
         {
-            using (var connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
             {
                 try
                 {
@@ -138,7 +138,7 @@ namespace Lithnet.GoogleApps
 //#if DEBUG
 //                    Logger.WriteLine("PATCH GROUP SETTINGS request: {0}", connection.Client.Serializer.Serialize(item));
 //#endif
-                    var result = request.ExecuteWithBackoff();
+                    GroupSettings result = request.ExecuteWithBackoff();
 //#if DEBUG
 //                    Logger.WriteLine("PATCH GROUP SETTINGS response: {0}", connection.Client.Serializer.Serialize(result));
 //#endif

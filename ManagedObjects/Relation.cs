@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {
-    public class Relation : CustomTypeObject, IIsEmptyObject
+    public class Relation : CustomTypeObject
     {
         [JsonIgnore]
         protected override string[] StandardTypes
@@ -18,10 +18,10 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        [JsonProperty("value")]
+        [JsonProperty("value"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Value { get; set; }
 
-        public bool IsEmpty()
+        public override bool IsEmpty()
         {
             return this.Value.IsNullOrNullPlaceholder();
         }

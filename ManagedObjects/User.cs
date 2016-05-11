@@ -12,8 +12,6 @@
 
     public class User : IDirectResponseSchema, ISerializable
     {
-        private bool creating;
-
         public List<Address> Addresses { get; set; }
 
         public bool? AgreedToTerms { get; private set; }
@@ -155,24 +153,24 @@
 
         public List<Website> Websites { get; set; }
 
-        internal bool Creating
-        {
-            get
-            {
-                return this.creating;
-            }
-        }
+        internal bool Creating { get; }
 
         public User()
         {
+            if (this.Name == null)
+            {
+                this.Name = new UserName();
+            }
         }
 
         public User(bool creating)
+            :this()
         {
-            this.creating = creating;
+            this.Creating = creating;
         }
 
         protected User(SerializationInfo info, StreamingContext context)
+            :this()
         {
             foreach (SerializationEntry entry in info)
             {

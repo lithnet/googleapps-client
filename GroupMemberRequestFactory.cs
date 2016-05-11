@@ -13,6 +13,8 @@ using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps
 {
+    using Google;
+
     public static class GroupMemberRequestFactory
     {
         private static BlockingCollection<GoogleGroup> queue = new BlockingCollection<GoogleGroup>();
@@ -72,7 +74,7 @@ namespace Lithnet.GoogleApps
             Stopwatch timer = new Stopwatch();
             GroupMembership membership = new GroupMembership();
 
-            using (var poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
                 MembersResource.ListRequest request = poolService.Client.Members.List(groupKey);
@@ -88,7 +90,7 @@ namespace Lithnet.GoogleApps
 
                     if (members.MembersValue != null)
                     {
-                        foreach (var member in members.MembersValue)
+                        foreach (Member member in members.MembersValue)
                         {
                             if (!string.IsNullOrWhiteSpace(member.Email))
                             {
@@ -134,7 +136,7 @@ namespace Lithnet.GoogleApps
 
         public static void AddMember(string groupID, Member item)
         {
-            using (var poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 MembersResource.InsertRequest request = poolService.Client.Members.Insert(item, groupID);
 //#if DEBUG
@@ -151,7 +153,7 @@ namespace Lithnet.GoogleApps
 
         public static void RemoveMember(string groupID, string memberID)
         {
-            using (var poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 MembersResource.DeleteRequest request = poolService.Client.Members.Delete(groupID, memberID);
 
@@ -162,7 +164,7 @@ namespace Lithnet.GoogleApps
 
         public static void AddMembers(string id, IList<Member> members, bool throwOnExistingMember)
         {
-            using (var poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 Queue<MembersResource.InsertRequest> requests = new Queue<MembersResource.InsertRequest>();
 
@@ -176,7 +178,7 @@ namespace Lithnet.GoogleApps
                 List<string> failedMembers = new List<string>();
                 List<Exception> failures = new List<Exception>();
 
-                foreach (var request in requests)
+                foreach (MembersResource.InsertRequest request in requests)
                 {
                     batchRequest.Queue<MembersResource>(request,
                           (content, error, i, message) =>
@@ -204,7 +206,7 @@ namespace Lithnet.GoogleApps
                                   }
                               }
 
-                              var ex = new Google.GoogleApiException(poolService.Client.Name, errorString);
+                              GoogleApiException ex = new Google.GoogleApiException(poolService.Client.Name, errorString);
                               ex.HttpStatusCode = message.StatusCode;
 
                               failedMembers.Add(itemKey.Email);
@@ -228,7 +230,7 @@ namespace Lithnet.GoogleApps
 
         public static void RemoveMembers(string id, IList<string> members, bool throwOnMissingMember)
         {
-            using (var poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 List<MembersResource.DeleteRequest> requests = new List<MembersResource.DeleteRequest>();
 
@@ -243,7 +245,7 @@ namespace Lithnet.GoogleApps
                 List<string> failedMembers = new List<string>();
                 List<Exception> failures = new List<Exception>();
 
-                foreach (var request in requests)
+                foreach (MembersResource.DeleteRequest request in requests)
                 {
                     batchRequest.Queue<string>(request,
                           (content, error, i, message) =>
@@ -267,7 +269,7 @@ namespace Lithnet.GoogleApps
                                   }
                               }
 
-                              var ex = new Google.GoogleApiException(poolService.Client.Name, errorString);
+                              GoogleApiException ex = new Google.GoogleApiException(poolService.Client.Name, errorString);
                               ex.HttpStatusCode = message.StatusCode;
                               //Logger.WriteException(ex);
                               failedMembers.Add(itemKey);

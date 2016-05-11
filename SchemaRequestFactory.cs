@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps
 {
+    using Google.Apis.Admin.Directory.directory_v1;
+
     public static class SchemaRequestFactory
     {
         static SchemaRequestFactory()
@@ -18,27 +20,27 @@ namespace Lithnet.GoogleApps
 
         public static void CreateSchema(string customerID, Schema schema)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                var schemaReq = connection.Client.Schemas.Insert(schema, customerID);
+                SchemasResource.InsertRequest schemaReq = connection.Client.Schemas.Insert(schema, customerID);
                 schemaReq.Execute();
             }
         }
 
         public static void DeleteSchema(string customerID, string schemaKey)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                var schemaReq = connection.Client.Schemas.Delete(customerID, schemaKey);
+                SchemasResource.DeleteRequest schemaReq = connection.Client.Schemas.Delete(customerID, schemaKey);
                 schemaReq.Execute();
             }
         }
 
         public static void UpdateSchema(string customerID, Schema schema)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
             {
-                var schemaReq = connection.Client.Schemas.Update(schema, customerID, schema.SchemaName);
+                SchemasResource.UpdateRequest schemaReq = connection.Client.Schemas.Update(schema, customerID, schema.SchemaName);
                 schemaReq.Execute();
             }
         }
@@ -47,9 +49,9 @@ namespace Lithnet.GoogleApps
         {
             try
             {
-                using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
                 {
-                    var schemaReq = connection.Client.Schemas.Get(customerID, schemaName);
+                    SchemasResource.GetRequest schemaReq = connection.Client.Schemas.Get(customerID, schemaName);
                     Schema schema = schemaReq.Execute();
                     if (schema != null)
                     {
@@ -74,13 +76,22 @@ namespace Lithnet.GoogleApps
             }
         }
 
+        public static Schema GetSchema(string customerID, string schemaName)
+        {
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                SchemasResource.GetRequest schemaReq = connection.Client.Schemas.Get(customerID, schemaName);
+                return schemaReq.Execute();
+            }
+        }
+
         public static bool HasAccessToSchema(string customerID)
         {
             try
             {
-                using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
                 {
-                    var schemaReq = connection.Client.Schemas.List(customerID);
+                    SchemasResource.ListRequest schemaReq = connection.Client.Schemas.List(customerID);
                     Schemas schemas = schemaReq.Execute();
                     if (schemas != null)
                     {

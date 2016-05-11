@@ -43,7 +43,10 @@
     <Compile Include="Api\GroupSettingsPatchRequest.cs" />
     <Compile Include="Api\GroupSettingsUpdateRequest.cs" />
     <Compile Include="Api\GroupSettingsGetRequest.cs" />
+    <Compile Include="Api\MakeAdminRequest.cs" />
     <Compile Include="Api\UserUndeleteRequest.cs" />
+    <Compile Include="GDataServicePoolT.cs" />
+    <Compile Include="GDataServiceWrapperT.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="ManagedObjects\CustomTypeObject.cs" />
     <Compile Include="Api\UserAliasDeleteRequest.cs" />
@@ -82,6 +85,7 @@
     <Compile Include="ManagedObjects\Organization.cs" />
     <Compile Include="ManagedObjects\IM.cs" />
     <Compile Include="ManagedObjects\User.cs" />
+    <Compile Include="ManagedObjects\MakeAdminParameters.cs" />
     <Compile Include="ManagedObjects\UserAlias.cs" />
     <Compile Include="ManagedObjects\UserAliases.cs" />
     <Compile Include="ManagedObjects\UserList.cs" />
@@ -95,6 +99,7 @@
     <Compile Include="SchemaRequestFactory.cs" />
     <Compile Include="DomainsRequestFactory.cs" />
     <Compile Include="UserRequestFactory.cs" />
+    <Compile Include="UserSettingsRequestFactory.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -109,8 +114,8 @@
       <HintPath>packages\Google.Apis.1.11.1\lib\net45\Google.Apis.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Google.Apis.Admin.Directory.directory_v1">
-      <HintPath>packages\Google.Apis.Admin.Directory.directory_v1.1.11.1.341\lib\portable-net45+sl50+netcore45+wpa81+wp8\Google.Apis.Admin.Directory.directory_v1.dll</HintPath>
+    <Reference Include="Google.Apis.Admin.Directory.directory_v1, Version=1.12.0.447, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\googleapps-managementagent\packages\Google.Apis.Admin.Directory.directory_v1.1.12.0.447\lib\portable-net45+netcore45+wpa81+wp8\Google.Apis.Admin.Directory.directory_v1.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Google.Apis.Auth">
@@ -125,20 +130,32 @@
       <HintPath>packages\Google.Apis.Core.1.11.1\lib\net45\Google.Apis.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Google.Apis.Groupssettings.v1, Version=1.11.1.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>packages\Google.Apis.Groupssettings.v1.1.11.1.0\lib\portable-net45+sl50+netcore45+wpa81+wp8\Google.Apis.Groupssettings.v1.dll</HintPath>
+    <Reference Include="Google.Apis.Groupssettings.v1, Version=1.12.0.447, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\googleapps-managementagent\packages\Google.Apis.Groupssettings.v1.1.12.0.447\lib\portable-net45+netcore45+wpa81+wp8\Google.Apis.Groupssettings.v1.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Google.Apis.PlatformServices">
       <HintPath>packages\Google.Apis.1.11.1\lib\net45\Google.Apis.PlatformServices.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="log4net">
-      <HintPath>packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
+    <Reference Include="Google.GData.Apps, Version=2.2.0.0, Culture=neutral, PublicKeyToken=e6feebfe441b89cb, processorArchitecture=MSIL">
+      <HintPath>..\googleapps-managementagent\packages\Google.GData.Apps.2.2.0.0\lib\Google.GData.Apps.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Google.GData.Client, Version=2.2.0.0, Culture=neutral, PublicKeyToken=04a59ca9b0273830, processorArchitecture=MSIL">
+      <HintPath>..\googleapps-managementagent\packages\Google.GData.Client.2.2.0.0\lib\Google.GData.Client.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Google.GData.Extensions, Version=2.2.0.0, Culture=neutral, PublicKeyToken=0b4c5df2ebf20876, processorArchitecture=MSIL">
+      <HintPath>..\googleapps-managementagent\packages\Google.GData.Extensions.2.2.0.0\lib\Google.GData.Extensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\googleapps-managementagent\packages\log4net.2.0.5\lib\net45-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\googleapps-managementagent\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System">

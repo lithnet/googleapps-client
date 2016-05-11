@@ -11,34 +11,44 @@ using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps
 {
+    using Google.GData.Apps.GoogleMailSettings;
+    using Google.GData.Client;
+
     public static class ConnectionPools
     {
         private static BaseClientServicePool<DirectoryService> directoryServicePool;
 
         private static BaseClientServicePool<GroupssettingsService> groupSettingServicePool;
-       
-        public static BaseClientServicePool<DirectoryService> DirectoryServicePool
-        {
-            get
-            {
-                return ConnectionPools.directoryServicePool;
-            }
-        }
 
-        public static BaseClientServicePool<GroupssettingsService> GroupSettingServicePool
-        {
-            get
-            {
-                return ConnectionPools.groupSettingServicePool;
-            }
-        }
+        private static GDataServicePool<GoogleMailSettingsService> userSettingsServicePool;
+        
+        public static BaseClientServicePool<DirectoryService> DirectoryServicePool => ConnectionPools.directoryServicePool;
 
+        public static BaseClientServicePool<GroupssettingsService> GroupSettingServicePool => ConnectionPools.groupSettingServicePool;
+
+        public static GDataServicePool<GoogleMailSettingsService> UserSettingsServicePool => ConnectionPools.userSettingsServicePool;
+        
         public static void InitializePools(ServiceAccountCredential credentials, int directoryServicePoolSize, int groupSettingServicePoolSize)
         {
             ConnectionPools.PopulateDirectoryServicePool(credentials, directoryServicePoolSize);
             ConnectionPools.PopulateGroupSettingServicePool(credentials, groupSettingServicePoolSize);
+            ConnectionPools.PopulateUserSettingsServicePool(credentials, directoryServicePoolSize);
         }
 
+        private static void PopulateUserSettingsServicePool(ServiceAccountCredential credentials, int size)
+        {
+            ConnectionPools.userSettingsServicePool = new GDataServicePool<GoogleMailSettingsService>(size, (domain) =>
+            {
+                credentials.RequestAccessTokenAsync(System.Threading.CancellationToken.None).Wait();
+                GoogleMailSettingsService service = new GoogleMailSettingsService(domain, "Lithnet.GoogleApps");
+                GDataRequestFactory requestFactory = new GDataRequestFactory("Lithnet.GoogleApps");
+                requestFactory.CustomHeaders.Add($"Authorization: Bearer {credentials.Token.AccessToken}");
+                service.RequestFactory = requestFactory;
+
+                return service;
+            });
+        }
+        
         private static void PopulateDirectoryServicePool(ServiceAccountCredential credentials, int size)
         {
             //Logger.WriteLine("Populating directory service pool with {0} items", size);

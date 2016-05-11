@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {
-    public class Organization : CustomTypeObject, IPrimaryCandidateObject, IIsEmptyObject
+    public class Organization : CustomTypeObject, IPrimaryCandidateObject
     {
         [JsonIgnore]
         protected override string[] StandardTypes
@@ -18,31 +18,31 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        [JsonProperty("name")]
+        [JsonProperty("name"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Name { get; set; }
 
-        [JsonProperty("title")]
+        [JsonProperty("title"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Title { get; set; }
 
         [JsonProperty("primary")]
         public bool? Primary { get; set; }
 
-        [JsonProperty("department")]
+        [JsonProperty("department"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Department { get; set; }
 
-        [JsonProperty("symbol")]
+        [JsonProperty("symbol"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Symbol { get; set; }
 
-        [JsonProperty("location")]
+        [JsonProperty("location"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Location { get; set; }
 
-        [JsonProperty("description")]
+        [JsonProperty("description"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Description { get; set; }
 
-        [JsonProperty("domain")]
+        [JsonProperty("domain"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Domain { get; set; }
 
-        [JsonProperty("costCenter")]
+        [JsonProperty("costCenter"), JsonConverter(typeof(JsonNullStringConverter))]
         public string CostCenter { get; set; }
      
         [JsonIgnore]
@@ -54,7 +54,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        public bool IsEmpty()
+        public override bool IsEmpty()
         {
             return
                 this.CostCenter.IsNullOrNullPlaceholder() &&

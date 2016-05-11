@@ -6,9 +6,9 @@ using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {
-    public class ExternalID : CustomTypeObject, IIsEmptyObject
+    public class ExternalID : CustomTypeObject
     {
-        [JsonProperty("value")]
+        [JsonProperty("value"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Value { get; set; }
 
         [JsonIgnore]
@@ -21,7 +21,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        public bool IsEmpty()
+        public override bool IsEmpty()
         {
             return this.Value.IsNullOrNullPlaceholder();
         }

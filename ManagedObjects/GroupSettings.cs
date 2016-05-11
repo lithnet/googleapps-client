@@ -20,13 +20,13 @@
         [JsonProperty("archiveOnly")]
         public bool? ArchiveOnly { get; set; }
 
-        [JsonProperty("customReplyTo")]
+        [JsonProperty("customReplyTo"), JsonConverter(typeof(JsonNullStringConverter))]
         public string CustomReplyTo { get; set; }
 
-        [JsonProperty("defaultMessageDenyNotificationText")]
+        [JsonProperty("defaultMessageDenyNotificationText"), JsonConverter(typeof(JsonNullStringConverter))]
         public string DefaultMessageDenyNotificationText { get; set; }
 
-        [JsonProperty("description")]
+        [JsonProperty("description"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Description { get; set; }
 
         [JsonProperty("email")]
@@ -40,7 +40,7 @@
         [JsonProperty("isArchived")]
         public bool? IsArchived { get; set; }
 
-        [JsonProperty("kind")]
+        [JsonProperty("kind"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Kind { get; set; }
 
         [JsonProperty("maxMessageBytes")]
@@ -49,19 +49,19 @@
         [JsonProperty("membersCanPostAsTheGroup")]
         public bool? MembersCanPostAsTheGroup { get; set; }
 
-        [JsonProperty("messageDisplayFont")]
+        [JsonProperty("messageDisplayFont"), JsonConverter(typeof(JsonNullStringConverter))]
         public string MessageDisplayFont { get; set; }
 
-        [JsonProperty("messageModerationLevel")]
+        [JsonProperty("messageModerationLevel"), JsonConverter(typeof(JsonNullStringConverter))]
         public string MessageModerationLevel { get; set; }
 
-        [JsonProperty("name")]
+        [JsonProperty("name"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Name { get; set; }
 
-        [JsonProperty("primaryLanguage")]
+        [JsonProperty("primaryLanguage"), JsonConverter(typeof(JsonNullStringConverter))]
         public string PrimaryLanguage { get; set; }
 
-        [JsonProperty("replyTo")]
+        [JsonProperty("replyTo"), JsonConverter(typeof(JsonNullStringConverter))]
         public string ReplyTo { get; set; }
 
         [JsonProperty("sendMessageDenyNotification")]

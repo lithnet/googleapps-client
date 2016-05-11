@@ -13,13 +13,15 @@ using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps
 {
+    using Google.Apis.Admin.Directory.directory_v1;
+
     public static class DomainsRequestFactory
     {
         public static DomainList GetDomains(string customerID)
         {
-            using (var connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                var request = new DomainListRequest(connection.Client, customerID);
+                DomainListRequest request = new DomainListRequest(connection.Client, customerID);
 
                 return request.ExecuteWithBackoff();
             }

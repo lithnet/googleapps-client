@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {
-    public class Website : CustomTypeObject, IPrimaryCandidateObject, IIsEmptyObject
+    public class Website : CustomTypeObject, IPrimaryCandidateObject
     {
         [JsonIgnore]
         protected override string[] StandardTypes
@@ -18,7 +18,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        [JsonProperty("value")]
+        [JsonProperty("value"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Value { get; set; }
 
         [JsonProperty("primary")]
@@ -33,7 +33,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        public bool IsEmpty()
+        public override bool IsEmpty()
         {
             return this.Value.IsNullOrNullPlaceholder();
         }

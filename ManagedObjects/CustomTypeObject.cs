@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {
-    public abstract class CustomTypeObject
+    public abstract class CustomTypeObject : IIsEmptyObject
     {
         protected abstract string[] StandardTypes { get; }
 
@@ -44,5 +44,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
                 }
             }
         }
+
+        public abstract bool IsEmpty();
     }
 }

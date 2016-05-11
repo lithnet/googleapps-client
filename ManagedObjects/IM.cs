@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {
-    public class IM : CustomTypeObject, IPrimaryCandidateObject, IIsEmptyObject
+    public class IM : CustomTypeObject, IPrimaryCandidateObject
     {
         [JsonIgnore]
         protected override string[] StandardTypes
@@ -20,16 +20,16 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
         private static string[] StandardProtocols = { "aim", "gtalk", "icq", "jabber", "msn", "net_meeting", "qq", "skype", "yahoo" };
 
-        [JsonProperty("im")]
+        [JsonProperty("im"), JsonConverter(typeof(JsonNullStringConverter))]
         public string IMAddress { get; set; }
 
         [JsonProperty("primary")]
         public bool? Primary { get; set; }
 
-        [JsonProperty("protocol")]
+        [JsonProperty("protocol"), JsonConverter(typeof(JsonNullStringConverter))]
         private string ProtocolRaw { get; set; }
 
-        [JsonProperty("customProtocol")]
+        [JsonProperty("customProtocol"), JsonConverter(typeof(JsonNullStringConverter))]
         private string CustomProtocolRaw { get; set; }
 
         [JsonIgnore]
@@ -70,7 +70,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        public bool IsEmpty()
+        public override bool IsEmpty()
         {
             return this.IMAddress.IsNullOrNullPlaceholder();
         }

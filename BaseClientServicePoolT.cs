@@ -20,12 +20,12 @@ namespace Lithnet.GoogleApps
         {
             if (poolSize <= 0)
             {
-                throw new ArgumentOutOfRangeException("poolSize", poolSize, "Pool size must be greater than zero");
+                throw new ArgumentOutOfRangeException(nameof(poolSize), poolSize, "Pool size must be greater than zero");
             }
 
             if (itemFactory == null)
             {
-                throw new ArgumentNullException("itemFactory");
+                throw new ArgumentNullException(nameof(itemFactory));
             }
 
             this.PoolEmptySleepInterval = 100;
@@ -82,7 +82,7 @@ namespace Lithnet.GoogleApps
             for (int i = 0; i < count; i++)
             {
                 T item = itemFactory(i);
-                var wrapper = new BaseClientServiceWrapper<T>(this, item);
+                BaseClientServiceWrapper<T> wrapper = new BaseClientServiceWrapper<T>(this, item);
                 this.items.Add(wrapper);
             }
         }

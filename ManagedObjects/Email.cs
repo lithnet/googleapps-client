@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
+
 namespace Lithnet.GoogleApps.ManagedObjects
 {
-    public class Email : CustomTypeObject, IPrimaryCandidateObject, IIsEmptyObject
+    public class Email : CustomTypeObject, IPrimaryCandidateObject
     {
         [JsonIgnore]
         protected override string[] StandardTypes
@@ -18,7 +19,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        [JsonProperty("address")]
+        [JsonProperty("address"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Address { get; set; }
 
         [JsonProperty("primary")]
@@ -33,7 +34,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        public bool IsEmpty()
+        public override bool IsEmpty()
         {
             return this.Address.IsNullOrNullPlaceholder();
         }

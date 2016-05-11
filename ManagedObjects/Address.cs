@@ -7,7 +7,7 @@ using Lithnet.GoogleApps;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {
-    public class Address : CustomTypeObject, IPrimaryCandidateObject, IIsEmptyObject
+    public class Address : CustomTypeObject, IPrimaryCandidateObject
     {
         [JsonIgnore]
         protected override string[] StandardTypes
@@ -22,34 +22,34 @@ namespace Lithnet.GoogleApps.ManagedObjects
         [JsonProperty("sourceIsStructured")]
         public bool? SourceIsStructured { get; set; }
 
-        [JsonProperty("formatted")]
+        [JsonProperty("formatted"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Formatted { get; set; }
 
         [JsonProperty("primary")]
         public bool? Primary { get; set; }
 
-        [JsonProperty("poBox")]
+        [JsonProperty("poBox"), JsonConverter(typeof(JsonNullStringConverter))]
         public string POBox { get; set; }
 
-        [JsonProperty("extendedAddress")]
+        [JsonProperty("extendedAddress"), JsonConverter(typeof(JsonNullStringConverter))]
         public string ExtendedAddress { get; set; }
 
-        [JsonProperty("streetAddress")]
+        [JsonProperty("streetAddress"), JsonConverter(typeof(JsonNullStringConverter))]
         public string StreetAddress { get; set; }
 
-        [JsonProperty("locality")]
+        [JsonProperty("locality"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Locality { get; set; }
 
-        [JsonProperty("region")]
+        [JsonProperty("region"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Region { get; set; }
 
-        [JsonProperty("postalCode")]
+        [JsonProperty("postalCode"), JsonConverter(typeof(JsonNullStringConverter))]
         public string PostalCode { get; set; }
 
-        [JsonProperty("country")]
+        [JsonProperty("country"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Country { get; set; }
 
-        [JsonProperty("countryCode")]
+        [JsonProperty("countryCode"), JsonConverter(typeof(JsonNullStringConverter))]
         public string CountryCode { get; set; }
 
         [JsonIgnore]
@@ -61,7 +61,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        public bool IsEmpty()
+        public override bool IsEmpty()
         {
             return 
                 this.Country.IsNullOrNullPlaceholder() &&
