@@ -13,6 +13,7 @@ namespace Lithnet.GoogleApps
 {
     using Google.GData.Apps.GoogleMailSettings;
     using Google.GData.Client;
+    using Google.GData.Contacts;
 
     public static class ConnectionPools
     {
@@ -21,18 +22,23 @@ namespace Lithnet.GoogleApps
         private static BaseClientServicePool<GroupssettingsService> groupSettingServicePool;
 
         private static GDataServicePool<GoogleMailSettingsService> userSettingsServicePool;
-        
+
+        private static GDataServicePool<ContactsService> contactsServicePool;
+
         public static BaseClientServicePool<DirectoryService> DirectoryServicePool => ConnectionPools.directoryServicePool;
 
         public static BaseClientServicePool<GroupssettingsService> GroupSettingServicePool => ConnectionPools.groupSettingServicePool;
 
         public static GDataServicePool<GoogleMailSettingsService> UserSettingsServicePool => ConnectionPools.userSettingsServicePool;
-        
+        public static GDataServicePool<ContactsService> ContactsServicePool => ConnectionPools.contactsServicePool;
+
+
         public static void InitializePools(ServiceAccountCredential credentials, int directoryServicePoolSize, int groupSettingServicePoolSize)
         {
             ConnectionPools.PopulateDirectoryServicePool(credentials, directoryServicePoolSize);
             ConnectionPools.PopulateGroupSettingServicePool(credentials, groupSettingServicePoolSize);
             ConnectionPools.PopulateUserSettingsServicePool(credentials, directoryServicePoolSize);
+            ConnectionPools.PopulateContactsServicePool(credentials, directoryServicePoolSize);
         }
 
         private static void PopulateUserSettingsServicePool(ServiceAccountCredential credentials, int size)
@@ -48,7 +54,21 @@ namespace Lithnet.GoogleApps
                 return service;
             });
         }
-        
+
+        private static void PopulateContactsServicePool(ServiceAccountCredential credentials, int size)
+        {
+            ConnectionPools.contactsServicePool = new GDataServicePool<ContactsService>(size, (i) =>
+            {
+                credentials.RequestAccessTokenAsync(System.Threading.CancellationToken.None).Wait();
+                ContactsService service = new ContactsService("Lithnet.GoogleApps");
+                GDataRequestFactory requestFactory = new GDataRequestFactory("Lithnet.GoogleApps");
+                requestFactory.CustomHeaders.Add($"Authorization: Bearer {credentials.Token.AccessToken}");
+                service.RequestFactory = requestFactory;
+
+                return service;
+            });
+        }
+
         private static void PopulateDirectoryServicePool(ServiceAccountCredential credentials, int size)
         {
             //Logger.WriteLine("Populating directory service pool with {0} items", size);

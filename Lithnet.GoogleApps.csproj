@@ -99,6 +99,7 @@
     <Compile Include="SchemaRequestFactory.cs" />
     <Compile Include="DomainsRequestFactory.cs" />
     <Compile Include="UserRequestFactory.cs" />
+    <Compile Include="ContactsRequestFactory.cs" />
     <Compile Include="UserSettingsRequestFactory.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -144,6 +145,10 @@
     </Reference>
     <Reference Include="Google.GData.Client, Version=2.2.0.0, Culture=neutral, PublicKeyToken=04a59ca9b0273830, processorArchitecture=MSIL">
       <HintPath>..\googleapps-managementagent\packages\Google.GData.Client.2.2.0.0\lib\Google.GData.Client.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Google.GData.Contacts, Version=2.2.0.0, Culture=neutral, PublicKeyToken=7e065189dd4b982f, processorArchitecture=MSIL">
+      <HintPath>..\googleapps-managementagent\packages\Google.GData.Contacts.2.2.0.0\lib\Google.GData.Contacts.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Google.GData.Extensions, Version=2.2.0.0, Culture=neutral, PublicKeyToken=0b4c5df2ebf20876, processorArchitecture=MSIL">

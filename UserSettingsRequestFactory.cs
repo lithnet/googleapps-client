@@ -21,7 +21,7 @@ namespace Lithnet.GoogleApps
             }
 
             string[] mailParts = mail.Split('@');
-
+            
             using (GDataServiceWrapper<GoogleMailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take(mailParts[1]))
             {
                 AppsExtendedFeed x = connection.Client.RetrieveDelegates(mailParts[0]);

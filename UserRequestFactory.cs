@@ -6,13 +6,12 @@ using System.Linq;
 using Lithnet.GoogleApps.Api;
 using Lithnet.GoogleApps.ManagedObjects;
 using Newtonsoft.Json;
+using Google.Apis.Admin.Directory.directory_v1;
+using Google.Apis.Admin.Directory.directory_v1.Data;
+using User = Lithnet.GoogleApps.ManagedObjects.User;
 
 namespace Lithnet.GoogleApps
 {
-    using Google.Apis.Admin.Directory.directory_v1;
-    using Google.Apis.Admin.Directory.directory_v1.Data;
-    using User = ManagedObjects.User;
-
     public static class UserRequestFactory
     {
         public static void StartImport(string customerID, BlockingCollection<object> importUsers)
@@ -40,7 +39,7 @@ namespace Lithnet.GoogleApps
                 request.MaxResults = 500;
                 if (fields != null)
                 {
-                    request.Projection = UserListRequest.ProjectionEnum.Custom;
+                    request.Projection = UserListRequest.ProjectionEnum.Full;
                     request.Fields = fields;
                 }
 
