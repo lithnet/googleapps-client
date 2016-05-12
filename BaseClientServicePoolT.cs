@@ -8,99 +8,18 @@ using System.Collections.Concurrent;
 
 namespace Lithnet.GoogleApps
 {
-    public class BaseClientServicePool<T> : IDisposable where T : BaseClientService
+    public class BaseClientServicePool<T> : Pool<T> where T : BaseClientService
     {
-        public int PoolEmptySleepInterval { get; set; }
-        
-        private bool isDisposed;
-
-        private ConcurrentBag<BaseClientServiceWrapper<T>> items;
-
-        public BaseClientServicePool(int poolSize, Func<int, T> itemFactory)
+        public BaseClientServicePool(int poolSize, Func<T> itemFactory)
+            : base(poolSize, itemFactory)
         {
-            if (poolSize <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(poolSize), poolSize, "Pool size must be greater than zero");
-            }
-
-            if (itemFactory == null)
-            {
-                throw new ArgumentNullException(nameof(itemFactory));
-            }
-
-            this.PoolEmptySleepInterval = 100;
-            this.items = new ConcurrentBag<BaseClientServiceWrapper<T>>();
-            this.LoadItems(poolSize, itemFactory);
         }
 
-        public BaseClientServiceWrapper<T> Take(Newtonsoft.Json.NullValueHandling nullValueHandling)
+        public PoolItem<T> Take(Newtonsoft.Json.NullValueHandling nullValueHandling)
         {
-            BaseClientServiceWrapper<T> item;
-
-            while (true)
-            {
-                if (!this.items.TryTake(out item))
-                {
-                    // Pool empty. Sleeping
-                    Thread.Sleep(this.PoolEmptySleepInterval);
-                }
-                else
-                {
-                    ((GoogleJsonSerializer)item.Client.Serializer).NullValueHandling = nullValueHandling;
-                    return item;
-                }
-            }
-        }
-
-        public void Return(BaseClientServiceWrapper<T> item)
-        {
-            this.items.Add(item);
-        }
-
-        public void Dispose()
-        {
-            if (this.isDisposed)
-            {
-                return;
-            }
-
-            this.isDisposed = true;
-
-            if (typeof(IDisposable).IsAssignableFrom(typeof(T)))
-            {
-                BaseClientServiceWrapper<T> item;
-
-                while (this.items.TryTake(out item))
-                {
-                    item.Dispose();
-                }
-            }
-        }
-
-        private void LoadItems(int count, Func<int, T> itemFactory)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                T item = itemFactory(i);
-                BaseClientServiceWrapper<T> wrapper = new BaseClientServiceWrapper<T>(this, item);
-                this.items.Add(wrapper);
-            }
-        }
-
-        public int AvailableCount
-        {
-            get
-            {
-                return this.items.Count;
-            }
-        }
-
-        public bool IsDisposed
-        {
-            get
-            {
-                return isDisposed;
-            }
+            PoolItem<T> item = base.Take();
+            ((GoogleJsonSerializer)item.Item.Serializer).NullValueHandling = nullValueHandling;
+            return item;
         }
     }
 }

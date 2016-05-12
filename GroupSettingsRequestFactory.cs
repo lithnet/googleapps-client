@@ -17,18 +17,6 @@ namespace Lithnet.GoogleApps
     {
         private static BlockingCollection<GoogleGroup> queue = new BlockingCollection<GoogleGroup>();
 
-        private static Stopwatch totalTimer = new Stopwatch();
-
-        public static TimeSpan CumlativeTime { get; private set; }
-
-        public static TimeSpan Elapsed
-        {
-            get
-            {
-                return GroupSettingsRequestFactory.totalTimer.Elapsed;
-            }
-        }
-
         public static void AddJob(GoogleGroup group)
         {
             GroupSettingsRequestFactory.queue.Add(group);
@@ -41,115 +29,49 @@ namespace Lithnet.GoogleApps
 
         public static void ConsumeQueue(int threads)
         {
-            ParallelOptions op = new ParallelOptions();
-            op.MaxDegreeOfParallelism = threads;
-
-            totalTimer.Start();
+            ParallelOptions op = new ParallelOptions {MaxDegreeOfParallelism = threads};
 
             Parallel.ForEach(queue.GetConsumingEnumerable(), op, (myGroup) =>
             {
                 try
                 {
-                    Stopwatch timer = new Stopwatch();
-
-                    timer.Start();
                     myGroup.Settings = GroupSettingsRequestFactory.Get(myGroup.Group.Email);
-                    timer.Stop();
-
-                    lock (totalTimer)
-                    {
-                        CumlativeTime = CumlativeTime.Add(timer.Elapsed);
-                    }
-
-                    //Logger.WriteLine("{1}:{2:D3}:settings:{0}", myGroup.Group.Email, timer.Elapsed, ConnectionPools.GroupSettingServicePool.AvailableCount);
                 }
                 catch (AggregateException ex)
                 {
-                   // Logger.WriteException(ex);
                     myGroup.Errors.Add(ex.InnerException);
                 }
                 catch (Exception ex)
                 {
-                    //Logger.WriteException(ex);
-                    myGroup.Errors.Add(ex.InnerException);
+                    myGroup.Errors.Add(ex);
                 }
             });
-
-            totalTimer.Stop();
         }
 
         public static GroupSettings Get(string groupKey)
         {
-            using (BaseClientServiceWrapper<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
             {
-                try
-                {
-                    GroupSettingsGetRequest request = new GroupSettingsGetRequest(connection.Client, groupKey);
-//#if DEBUG
-//                    Logger.WriteLine("GET GROUP SETTINGS request: {0}", groupKey);
-//#endif
-                    GroupSettings result = request.ExecuteWithBackoff();
-//#if DEBUG
-//                    Logger.WriteLine("GET GROUP SETTINGS response: {0}", connection.Client.Serializer.Serialize(result));
-//#endif
-                    return result;
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("GET GROUP SETTINGS {0} threw an exception", groupKey);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+                GroupSettingsGetRequest request = new GroupSettingsGetRequest(connection.Item, groupKey);
+                return request.ExecuteWithBackoff();
             }
         }
 
         public static GroupSettings Update(string groupKey, GroupSettings item)
         {
-            using (BaseClientServiceWrapper<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Include))
+            using (PoolItem<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Include))
             {
-                try
-                {
-                    GroupSettingsUpdateRequest request = new GroupSettingsUpdateRequest(connection.Client, item, groupKey);
-//#if DEBUG
-//                    Logger.WriteLine("UPDATE GROUP SETTINGS request: {0}", connection.Client.Serializer.Serialize(item));
-//#endif
-                    GroupSettings result = request.ExecuteWithBackoff();
-//#if DEBUG
-//                    Logger.WriteLine("UPDATE GROUP SETTINGS response: {0}", connection.Client.Serializer.Serialize(result));
-//#endif
-                    return result;
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("UPDATE GROUP SETTINGS {0} threw an exception", groupKey);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+                GroupSettingsUpdateRequest request = new GroupSettingsUpdateRequest(connection.Item, item, groupKey);
+                return request.ExecuteWithBackoff();
             }
         }
 
         public static GroupSettings Patch(string groupKey, GroupSettings item)
         {
-            using (BaseClientServiceWrapper<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
             {
-                try
-                {
-                    GroupSettingsPatchRequest request = new GroupSettingsPatchRequest(connection.Client, item, groupKey);
-//#if DEBUG
-//                    Logger.WriteLine("PATCH GROUP SETTINGS request: {0}", connection.Client.Serializer.Serialize(item));
-//#endif
-                    GroupSettings result = request.ExecuteWithBackoff();
-//#if DEBUG
-//                    Logger.WriteLine("PATCH GROUP SETTINGS response: {0}", connection.Client.Serializer.Serialize(result));
-//#endif
-                    return result;
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("PATCH GROUP SETTINGS {0} threw an exception", groupKey);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+                GroupSettingsPatchRequest request = new GroupSettingsPatchRequest(connection.Item, item, groupKey);
+                return request.ExecuteWithBackoff();
             }
         }
     }

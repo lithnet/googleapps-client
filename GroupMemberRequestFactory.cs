@@ -19,18 +19,6 @@ namespace Lithnet.GoogleApps
     {
         private static BlockingCollection<GoogleGroup> queue = new BlockingCollection<GoogleGroup>();
 
-        private static Stopwatch totalTimer = new Stopwatch();
-
-        public static TimeSpan CumlativeTime { get; private set; }
-
-        public static TimeSpan Elapsed
-        {
-            get
-            {
-                return GroupMemberRequestFactory.totalTimer.Elapsed;
-            }
-        }
-
         public static void AddJob(GoogleGroup group)
         {
             GroupMemberRequestFactory.queue.Add(group);
@@ -43,10 +31,7 @@ namespace Lithnet.GoogleApps
 
         public static void ConsumeQueue(int threads)
         {
-            ParallelOptions op = new ParallelOptions();
-            op.MaxDegreeOfParallelism = threads;
-
-            totalTimer.Start();
+            ParallelOptions op = new ParallelOptions {MaxDegreeOfParallelism = threads};
 
             Parallel.ForEach(queue.GetConsumingEnumerable(), op, (myGroup) =>
             {
@@ -56,17 +41,13 @@ namespace Lithnet.GoogleApps
                 }
                 catch (AggregateException ex)
                 {
-                    //Logger.WriteException(ex);
                     myGroup.Errors.Add(ex.InnerException);
                 }
                 catch (Exception ex)
                 {
-                    //Logger.WriteException(ex);
-                    myGroup.Errors.Add(ex.InnerException);
+                    myGroup.Errors.Add(ex);
                 }
             });
-
-            totalTimer.Stop();
         }
 
         public static GroupMembership GetMembership(string groupKey)
@@ -74,10 +55,10 @@ namespace Lithnet.GoogleApps
             Stopwatch timer = new Stopwatch();
             GroupMembership membership = new GroupMembership();
 
-            using (BaseClientServiceWrapper<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
-                MembersResource.ListRequest request = poolService.Client.Members.List(groupKey);
+                MembersResource.ListRequest request = poolService.Item.Members.List(groupKey);
                 request.PrettyPrint = false;
 
                 timer.Start();
@@ -106,13 +87,6 @@ namespace Lithnet.GoogleApps
                 timer.Stop();
             }
 
-            lock (totalTimer)
-            {
-                CumlativeTime = CumlativeTime.Add(timer.Elapsed);
-            }
-
-            //Logger.WriteLine("{2}:{3:D3}:members:{1}:{0}", membership.Members.Count, groupKey, timer.Elapsed, ConnectionPools.DirectoryServicePool.AvailableCount);
-
             return membership;
         }
 
@@ -136,45 +110,35 @@ namespace Lithnet.GoogleApps
 
         public static void AddMember(string groupID, Member item)
         {
-            using (BaseClientServiceWrapper<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                MembersResource.InsertRequest request = poolService.Client.Members.Insert(item, groupID);
-//#if DEBUG
-//                Logger.WriteLine("ADD MEMBER request");
-//                Logger.WriteSeparatorLine('-');
-//                Logger.WriteLine(poolService.Client.Serializer.Serialize(item));
-//                Logger.WriteSeparatorLine('-');
-//#endif
-
+                MembersResource.InsertRequest request = poolService.Item.Members.Insert(item, groupID);
                 Member members = request.ExecuteWithBackoff();
-                //Logger.WriteLine("Added member {0} from {1}", item.Email ?? item.Id, groupID);
             }
         }
 
         public static void RemoveMember(string groupID, string memberID)
         {
-            using (BaseClientServiceWrapper<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                MembersResource.DeleteRequest request = poolService.Client.Members.Delete(groupID, memberID);
+                MembersResource.DeleteRequest request = poolService.Item.Members.Delete(groupID, memberID);
 
                 string members = request.ExecuteWithBackoff();
-                //Logger.WriteLine("Deleted member {0} from {1}", memberID, groupID);
             }
         }
 
         public static void AddMembers(string id, IList<Member> members, bool throwOnExistingMember)
         {
-            using (BaseClientServiceWrapper<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 Queue<MembersResource.InsertRequest> requests = new Queue<MembersResource.InsertRequest>();
 
                 foreach (Member member in members)
                 {
-                    //Logger.WriteLine("Queuing request to add member {0}", member.Email ?? member.Id);
-                    requests.Enqueue(poolService.Client.Members.Insert(member, id));
+                    requests.Enqueue(poolService.Item.Members.Insert(member, id));
                 }
 
-                Google.Apis.Requests.BatchRequest batchRequest = new Google.Apis.Requests.BatchRequest(poolService.Client);
+                Google.Apis.Requests.BatchRequest batchRequest = new Google.Apis.Requests.BatchRequest(poolService.Item);
                 List<string> failedMembers = new List<string>();
                 List<Exception> failures = new List<Exception>();
 
@@ -206,12 +170,11 @@ namespace Lithnet.GoogleApps
                                   }
                               }
 
-                              GoogleApiException ex = new Google.GoogleApiException(poolService.Client.Name, errorString);
+                              GoogleApiException ex = new Google.GoogleApiException(poolService.Item.Name, errorString);
                               ex.HttpStatusCode = message.StatusCode;
 
                               failedMembers.Add(itemKey.Email);
                               failures.Add(ex);
-                             // Logger.WriteException(ex);
                           });
                 }
 
@@ -230,17 +193,17 @@ namespace Lithnet.GoogleApps
 
         public static void RemoveMembers(string id, IList<string> members, bool throwOnMissingMember)
         {
-            using (BaseClientServiceWrapper<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 List<MembersResource.DeleteRequest> requests = new List<MembersResource.DeleteRequest>();
 
                 foreach (string member in members)
                 {
                     //Logger.WriteLine("Queuing request to delete member {0}", member);
-                    requests.Add(poolService.Client.Members.Delete(id, member));
+                    requests.Add(poolService.Item.Members.Delete(id, member));
                 }
 
-                Google.Apis.Requests.BatchRequest batchRequest = new Google.Apis.Requests.BatchRequest(poolService.Client);
+                Google.Apis.Requests.BatchRequest batchRequest = new Google.Apis.Requests.BatchRequest(poolService.Item);
 
                 List<string> failedMembers = new List<string>();
                 List<Exception> failures = new List<Exception>();
@@ -269,9 +232,8 @@ namespace Lithnet.GoogleApps
                                   }
                               }
 
-                              GoogleApiException ex = new Google.GoogleApiException(poolService.Client.Name, errorString);
+                              GoogleApiException ex = new Google.GoogleApiException(poolService.Item.Name, errorString);
                               ex.HttpStatusCode = message.StatusCode;
-                              //Logger.WriteException(ex);
                               failedMembers.Add(itemKey);
                               failures.Add(ex);
                           });

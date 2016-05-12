@@ -31,10 +31,6 @@ namespace Lithnet.GoogleApps
 
         public static void ImportGroups(string customerID, bool getMembers, bool getSettings, string groupFields, string settingsFields, BlockingCollection<object> items)
         {
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
-            int totalGroups = 0;
-
             Task membersTask = null;
             Task settingsTask = null;
 
@@ -51,10 +47,10 @@ namespace Lithnet.GoogleApps
 
             List<GoogleGroup> membersGroup = new List<GoogleGroup>();
 
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
-                GroupsResource.ListRequest request = connection.Client.Groups.List();
+                GroupsResource.ListRequest request = connection.Item.Groups.List();
                 request.Customer = customerID;
                 request.MaxResults = 200;
                 request.Fields = groupFields;
@@ -78,16 +74,11 @@ namespace Lithnet.GoogleApps
                         GroupSettingsRequestFactory.AddJob(group);
                         membersGroup.Add(group);
                     }
-
-                    totalGroups += pageResults.GroupsValue.Count;
+                   
                     token = pageResults.NextPageToken;
 
                 } while (token != null);
             }
-
-            TimeSpan enumerationElapsed = timer.Elapsed;
-            
-            totalGroups = membersGroup.Count;
 
             if (getMembers)
             {
@@ -122,224 +113,82 @@ namespace Lithnet.GoogleApps
             {
                 items.Add(group);
             }
-
-            timer.Stop();
-
-            //Logger.WriteLine("");
-            //Logger.WriteLine("--------------------------------------------------------");
-            //Logger.WriteLine("Groups enumeration completed: {0}", enumerationElapsed);
-            //Logger.WriteLine("");
-            //Logger.WriteLine("Groups settings completed:    {0}", GroupSettingsRequestFactory.Elapsed);
-            //Logger.WriteLine("Groups membership completed:  {0}", GroupMemberRequestFactory.Elapsed);
-            //Logger.WriteLine("");
-            //Logger.WriteLine("Groups settings avg:          {1} threads @ {0:N3} / group", GroupSettingsRequestFactory.Elapsed.TotalSeconds / totalGroups, SettingsThreads);
-            //Logger.WriteLine("Groups membership avg:        {1} threads @ {0:N3} / group", GroupMemberRequestFactory.Elapsed.TotalSeconds / totalGroups, MemberThreads);
-            //Logger.WriteLine("");
-            //Logger.WriteLine("Groups settings avg:          {1} threads @ {0:N3} / sec", totalGroups / GroupSettingsRequestFactory.Elapsed.TotalSeconds, SettingsThreads);
-            //Logger.WriteLine("Groups membership avg:        {1} threads @ {0:N3} / sec", totalGroups / GroupMemberRequestFactory.Elapsed.TotalSeconds, MemberThreads);
-            //Logger.WriteLine("");
-            //Logger.WriteLine("Groups settings act avg:      {1} threads @ {0:N3} / group", GroupSettingsRequestFactory.CumlativeTime.TotalSeconds / totalGroups, SettingsThreads);
-            //Logger.WriteLine("Groups membership act avg:    {1} threads @ {0:N3} / group", GroupMemberRequestFactory.CumlativeTime.TotalSeconds / totalGroups, MemberThreads);
-            //Logger.WriteLine("");
-            //Logger.WriteLine("Back-off retries              {0}", ApiExtensions.BackoffRetries);
-            //Logger.WriteLine("");
-            //Logger.WriteLine("Performance:                  {0} groups @ {1:N3} / group", totalGroups , (totalGroups/timer.Elapsed.TotalSeconds));
-            //Logger.WriteLine("Total import time (groups):   {0}", timer.Elapsed);
-
-
         }
 
         public static string Delete(string groupKey)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                try
-                {
-                    GroupsResource.DeleteRequest request = connection.Client.Groups.Delete(groupKey);
-//#if DEBUG
-//                    Logger.WriteLine("DELETE GROUP request: {0}", groupKey);
-//#endif
-                    string result = request.ExecuteWithBackoff();
-//#if DEBUG
-//                    Logger.WriteLine("DELETE GROUP response: {0}", result);
-//#endif
-                    return result;
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("DELETE GROUP {0} threw an exception", groupKey);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+                GroupsResource.DeleteRequest request = connection.Item.Groups.Delete(groupKey);
+                return request.ExecuteWithBackoff();
             }
         }
 
         public static Group Add(Group item)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                try
-                {
-                    GroupsResource.InsertRequest request = connection.Client.Groups.Insert(item);
-//#if DEBUG
-//                    Logger.WriteLine("ADD GROUP request: {0}", connection.Client.Serializer.Serialize(item));
-//#endif
-                    Group result = request.ExecuteWithBackoff();
-//#if DEBUG
-//                    Logger.WriteLine("ADD GROUP response: {0}", connection.Client.Serializer.Serialize(result));
-//#endif
-                    return result;
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("ADD GROUP {0} threw an exception", item.Email);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+                GroupsResource.InsertRequest request = connection.Item.Groups.Insert(item);
+                return request.ExecuteWithBackoff();
             }
         }
 
         public static Group Update(string groupKey, Group item)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                try
-                {
-                    GroupsResource.UpdateRequest request = connection.Client.Groups.Update(item, groupKey);
-//#if DEBUG
-//                    Logger.WriteLine("UPDATE GROUP request: {0}", connection.Client.Serializer.Serialize(item));
-//#endif
-                    Group result = request.ExecuteWithBackoff();
-//#if DEBUG
-//                    Logger.WriteLine("UPDATE GROUP response: {0}", connection.Client.Serializer.Serialize(result));
-//#endif
-                    return result;
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("UPDATE GROUP {0} threw an exception", groupKey);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+
+                GroupsResource.UpdateRequest request = connection.Item.Groups.Update(item, groupKey);
+               return request.ExecuteWithBackoff();
             }
         }
 
         public static Group Patch(string groupKey, Group item)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                try
-                {
-                    GroupsResource.PatchRequest request = connection.Client.Groups.Patch(item, groupKey);
-//#if DEBUG
-//                    Logger.WriteLine("PATCH GROUP request: {0}", connection.Client.Serializer.Serialize(item));
-//#endif
-                    Group result = request.ExecuteWithBackoff();
-//#if DEBUG
-//                    Logger.WriteLine("PATCH GROUP response: {0}", connection.Client.Serializer.Serialize(result));
-//#endif
-                    return result;
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("PATCH GROUP {0} threw an exception", groupKey);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+                GroupsResource.PatchRequest request = connection.Item.Groups.Patch(item, groupKey);
+                return request.ExecuteWithBackoff();
             }
         }
 
         public static Group Get(string groupKey)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                try
-                {
-                    GroupsResource.GetRequest request = connection.Client.Groups.Get(groupKey);
-//#if DEBUG
-//                    Logger.WriteLine("GET GROUP request: {0}", groupKey);
-//#endif
-                    Group result = request.ExecuteWithBackoff();
-//#if DEBUG
-//                    Logger.WriteLine("GET GROUP response: {0}", connection.Client.Serializer.Serialize(result));
-//#endif
-                    return result;
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("GET GROUP {0} threw an exception", groupKey);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+                GroupsResource.GetRequest request = connection.Item.Groups.Get(groupKey);
+                Group result = request.ExecuteWithBackoff();
+                return result;
             }
         }
 
         public static void AddAlias(string id, string newAlias)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                Alias alias = new Alias();
-                alias.AliasValue = newAlias;
+                Alias alias = new Alias { AliasValue = newAlias };
 
-                GroupsResource.AliasesResource.InsertRequest request = connection.Client.Groups.Aliases.Insert(alias, id);
-
-                try
-                {
-//#if DEBUG
-//                    Logger.WriteLine("ADD ALIAS request");
-//                    Logger.WriteSeparatorLine('-');
-//                    Logger.WriteLine(connection.Client.Serializer.Serialize(alias));
-//                    Logger.WriteSeparatorLine('-');
-//#endif
-                    Alias result = request.ExecuteWithBackoff();
-//                    Logger.WriteLine("Added alias {0} to group {1}", newAlias, id);
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("An exception occurred adding alias {0} to group {1}", newAlias, id);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+                GroupsResource.AliasesResource.InsertRequest request = connection.Item.Groups.Aliases.Insert(alias, id);
+                Alias result = request.ExecuteWithBackoff();
             }
         }
 
         public static void RemoveAlias(string id, string existingAlias)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                GroupsResource.AliasesResource.DeleteRequest request = connection.Client.Groups.Aliases.Delete(id, existingAlias);
-
-                try
-                {
-                    request.ExecuteWithBackoff();
-//                    Logger.WriteLine("Removed alias {0} from group {1}", existingAlias, id);
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("An exception occurred removing alias {0} from group {1}", existingAlias, id);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+                GroupsResource.AliasesResource.DeleteRequest request = connection.Item.Groups.Aliases.Delete(id, existingAlias);
+                request.ExecuteWithBackoff();
             }
         }
 
         public static IEnumerable<string> GetAliases(string id)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                GroupsResource.AliasesResource.ListRequest request = connection.Client.Groups.Aliases.List(id);
-
-                try
-                {
-                    Aliases aliases = request.ExecuteWithBackoff();
-                    return aliases.AliasesValue.Select(t => t.AliasValue);
-                }
-                catch (Google.GoogleApiException)
-                {
-                    //Logger.WriteLine("An exception occurred getting aliases for group {0}", id);
-                    //Logger.WriteException(ex);
-                    throw;
-                }
+                GroupsResource.AliasesResource.ListRequest request = connection.Item.Groups.Aliases.List(id);
+                Aliases aliases = request.ExecuteWithBackoff();
+                return aliases.AliasesValue.Select(t => t.AliasValue);
             }
         }
     }

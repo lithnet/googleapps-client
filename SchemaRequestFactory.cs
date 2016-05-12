@@ -20,27 +20,27 @@ namespace Lithnet.GoogleApps
 
         public static void CreateSchema(string customerID, Schema schema)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                SchemasResource.InsertRequest schemaReq = connection.Client.Schemas.Insert(schema, customerID);
+                SchemasResource.InsertRequest schemaReq = connection.Item.Schemas.Insert(schema, customerID);
                 schemaReq.Execute();
             }
         }
 
         public static void DeleteSchema(string customerID, string schemaKey)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                SchemasResource.DeleteRequest schemaReq = connection.Client.Schemas.Delete(customerID, schemaKey);
+                SchemasResource.DeleteRequest schemaReq = connection.Item.Schemas.Delete(customerID, schemaKey);
                 schemaReq.Execute();
             }
         }
 
         public static void UpdateSchema(string customerID, Schema schema)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
             {
-                SchemasResource.UpdateRequest schemaReq = connection.Client.Schemas.Update(schema, customerID, schema.SchemaName);
+                SchemasResource.UpdateRequest schemaReq = connection.Item.Schemas.Update(schema, customerID, schema.SchemaName);
                 schemaReq.Execute();
             }
         }
@@ -49,9 +49,9 @@ namespace Lithnet.GoogleApps
         {
             try
             {
-                using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
                 {
-                    SchemasResource.GetRequest schemaReq = connection.Client.Schemas.Get(customerID, schemaName);
+                    SchemasResource.GetRequest schemaReq = connection.Item.Schemas.Get(customerID, schemaName);
                     Schema schema = schemaReq.Execute();
                     if (schema != null)
                     {
@@ -78,9 +78,9 @@ namespace Lithnet.GoogleApps
 
         public static Schema GetSchema(string customerID, string schemaName)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                SchemasResource.GetRequest schemaReq = connection.Client.Schemas.Get(customerID, schemaName);
+                SchemasResource.GetRequest schemaReq = connection.Item.Schemas.Get(customerID, schemaName);
                 return schemaReq.Execute();
             }
         }
@@ -89,9 +89,9 @@ namespace Lithnet.GoogleApps
         {
             try
             {
-                using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
                 {
-                    SchemasResource.ListRequest schemaReq = connection.Client.Schemas.List(customerID);
+                    SchemasResource.ListRequest schemaReq = connection.Item.Schemas.List(customerID);
                     Schemas schemas = schemaReq.Execute();
                     if (schemas != null)
                     {

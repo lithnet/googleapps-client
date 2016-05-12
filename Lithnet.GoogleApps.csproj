@@ -45,8 +45,9 @@
     <Compile Include="Api\GroupSettingsGetRequest.cs" />
     <Compile Include="Api\MakeAdminRequest.cs" />
     <Compile Include="Api\UserUndeleteRequest.cs" />
-    <Compile Include="GDataServicePoolT.cs" />
-    <Compile Include="GDataServiceWrapperT.cs" />
+    <Compile Include="EmailSettingsService.cs" />
+    <Compile Include="PoolT.cs" />
+    <Compile Include="PoolItemT.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="ManagedObjects\CustomTypeObject.cs" />
     <Compile Include="Api\UserAliasDeleteRequest.cs" />
@@ -64,7 +65,6 @@
     <Compile Include="Api\DomainGetRequest.cs" />
     <Compile Include="Api\JsonNullStringConverter.cs" />
     <Compile Include="BaseClientServicePoolT.cs" />
-    <Compile Include="BaseClientServiceWrapperT.cs" />
     <Compile Include="ConnectionPools.cs" />
     <Compile Include="GoogleGroup.cs" />
     <Compile Include="GroupMemberRequestFactory.cs" />
@@ -99,7 +99,7 @@
     <Compile Include="SchemaRequestFactory.cs" />
     <Compile Include="DomainsRequestFactory.cs" />
     <Compile Include="UserRequestFactory.cs" />
-    <Compile Include="ContactsRequestFactory.cs" />
+    <Compile Include="ContactRequestFactory.cs" />
     <Compile Include="UserSettingsRequestFactory.cs" />
   </ItemGroup>
   <ItemGroup>

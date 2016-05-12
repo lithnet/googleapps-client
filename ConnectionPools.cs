@@ -17,69 +17,71 @@ namespace Lithnet.GoogleApps
 
     public static class ConnectionPools
     {
+        public static bool DisableGzip { get; set; }
+
         private static BaseClientServicePool<DirectoryService> directoryServicePool;
 
         private static BaseClientServicePool<GroupssettingsService> groupSettingServicePool;
 
-        private static GDataServicePool<GoogleMailSettingsService> userSettingsServicePool;
+        private static Pool<EmailSettingsService> userSettingsServicePool;
 
-        private static GDataServicePool<ContactsService> contactsServicePool;
+        private static Pool<ContactsService> contactsServicePool;
 
         public static BaseClientServicePool<DirectoryService> DirectoryServicePool => ConnectionPools.directoryServicePool;
 
         public static BaseClientServicePool<GroupssettingsService> GroupSettingServicePool => ConnectionPools.groupSettingServicePool;
 
-        public static GDataServicePool<GoogleMailSettingsService> UserSettingsServicePool => ConnectionPools.userSettingsServicePool;
-        public static GDataServicePool<ContactsService> ContactsServicePool => ConnectionPools.contactsServicePool;
+        public static Pool<EmailSettingsService> UserSettingsServicePool => ConnectionPools.userSettingsServicePool;
+
+        public static Pool<ContactsService> ContactsServicePool => ConnectionPools.contactsServicePool;
 
 
-        public static void InitializePools(ServiceAccountCredential credentials, int directoryServicePoolSize, int groupSettingServicePoolSize)
+        public static void InitializePools(ServiceAccountCredential credentials, int directoryServicePoolSize, int groupSettingServicePoolSize, int userSettingsPoolSize, int contactsPoolSize)
         {
             ConnectionPools.PopulateDirectoryServicePool(credentials, directoryServicePoolSize);
             ConnectionPools.PopulateGroupSettingServicePool(credentials, groupSettingServicePoolSize);
-            ConnectionPools.PopulateUserSettingsServicePool(credentials, directoryServicePoolSize);
-            ConnectionPools.PopulateContactsServicePool(credentials, directoryServicePoolSize);
+            ConnectionPools.PopulateUserSettingsServicePool(credentials, userSettingsPoolSize);
+            ConnectionPools.PopulateContactsServicePool(credentials, contactsPoolSize);
         }
 
         private static void PopulateUserSettingsServicePool(ServiceAccountCredential credentials, int size)
         {
-            ConnectionPools.userSettingsServicePool = new GDataServicePool<GoogleMailSettingsService>(size, (domain) =>
+            ConnectionPools.userSettingsServicePool = new Pool<EmailSettingsService>(size, () =>
             {
                 credentials.RequestAccessTokenAsync(System.Threading.CancellationToken.None).Wait();
-                GoogleMailSettingsService service = new GoogleMailSettingsService(domain, "Lithnet.GoogleApps");
+                EmailSettingsService service = new EmailSettingsService("Lithnet.GoogleApps");
                 GDataRequestFactory requestFactory = new GDataRequestFactory("Lithnet.GoogleApps");
                 requestFactory.CustomHeaders.Add($"Authorization: Bearer {credentials.Token.AccessToken}");
+                requestFactory.UseGZip = !ConnectionPools.DisableGzip;
                 service.RequestFactory = requestFactory;
-
                 return service;
             });
         }
 
         private static void PopulateContactsServicePool(ServiceAccountCredential credentials, int size)
         {
-            ConnectionPools.contactsServicePool = new GDataServicePool<ContactsService>(size, (i) =>
+            ConnectionPools.contactsServicePool = new Pool<ContactsService>(size, () =>
             {
                 credentials.RequestAccessTokenAsync(System.Threading.CancellationToken.None).Wait();
                 ContactsService service = new ContactsService("Lithnet.GoogleApps");
                 GDataRequestFactory requestFactory = new GDataRequestFactory("Lithnet.GoogleApps");
                 requestFactory.CustomHeaders.Add($"Authorization: Bearer {credentials.Token.AccessToken}");
+                requestFactory.CustomHeaders.Add("GData-Version: 3.0");
+                requestFactory.UseGZip = !ConnectionPools.DisableGzip;
                 service.RequestFactory = requestFactory;
-
                 return service;
             });
         }
 
         private static void PopulateDirectoryServicePool(ServiceAccountCredential credentials, int size)
         {
-            //Logger.WriteLine("Populating directory service pool with {0} items", size);
-
-            ConnectionPools.directoryServicePool = new BaseClientServicePool<DirectoryService>(size, (i) =>
+            ConnectionPools.directoryServicePool = new BaseClientServicePool<DirectoryService>(size, () =>
                 {
                     return new DirectoryService(new BaseClientService.Initializer()
                     {
                         HttpClientInitializer = credentials,
                         ApplicationName = "LithnetGoogleAppsLibrary",
-                        GZipEnabled = true,
+                        GZipEnabled = !ConnectionPools.DisableGzip,
                         Serializer = new GoogleJsonSerializer(),
                         DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None
                     });
@@ -88,14 +90,13 @@ namespace Lithnet.GoogleApps
 
         private static void PopulateGroupSettingServicePool(ServiceAccountCredential credentials, int size)
         {
-            //Logger.WriteLine("Populating group setting service pool with {0} items", size);
-            ConnectionPools.groupSettingServicePool = new BaseClientServicePool<GroupssettingsService>(size, (i) =>
+            ConnectionPools.groupSettingServicePool = new BaseClientServicePool<GroupssettingsService>(size, () =>
                 {
                     return new GroupssettingsService(new BaseClientService.Initializer()
                     {
                         HttpClientInitializer = credentials,
                         ApplicationName = "LithnetGoogleAppsLibrary",
-                        GZipEnabled = true,
+                        GZipEnabled = !ConnectionPools.DisableGzip,
                         Serializer = new GoogleJsonSerializer(),
                         DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None
 

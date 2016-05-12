@@ -19,9 +19,9 @@ namespace Lithnet.GoogleApps
     {
         public static DomainList GetDomains(string customerID)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                DomainListRequest request = new DomainListRequest(connection.Client, customerID);
+                DomainListRequest request = new DomainListRequest(connection.Item, customerID);
 
                 return request.ExecuteWithBackoff();
             }

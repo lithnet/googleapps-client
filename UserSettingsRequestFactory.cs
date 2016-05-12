@@ -21,10 +21,12 @@ namespace Lithnet.GoogleApps
             }
 
             string[] mailParts = mail.Split('@');
-            
-            using (GDataServiceWrapper<GoogleMailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take(mailParts[1]))
+
+            using (PoolItem<EmailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take())
             {
-                AppsExtendedFeed x = connection.Client.RetrieveDelegates(mailParts[0]);
+                connection.Item.SetDomain(mailParts[1]);
+
+                AppsExtendedFeed x = connection.Item.RetrieveDelegates(mailParts[0]);
 
                 foreach (AppsExtendedEntry item in x.Entries.OfType<AppsExtendedEntry>())
                 {
@@ -47,9 +49,11 @@ namespace Lithnet.GoogleApps
 
             string[] mailParts = mail.Split('@');
 
-            using (GDataServiceWrapper<GoogleMailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take(mailParts[1]))
+            using (PoolItem<EmailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take())
             {
-                connection.Client.DeleteDelegate(mailParts[0], @delegate);
+                connection.Item.SetDomain(mailParts[1]);
+
+                connection.Item.DeleteDelegate(mailParts[0], @delegate);
             }
         }
 
@@ -62,11 +66,13 @@ namespace Lithnet.GoogleApps
 
             string[] mailParts = mail.Split('@');
 
-            using (GDataServiceWrapper<GoogleMailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take(mailParts[1]))
+            using (PoolItem<EmailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take())
             {
+                connection.Item.SetDomain(mailParts[1]);
+
                 foreach (string @delegate in UserSettingsRequestFactory.GetDelegates(mail))
                 {
-                    connection.Client.DeleteDelegate(mailParts[0], @delegate);
+                    connection.Item.DeleteDelegate(mailParts[0], @delegate);
                 }
             }
         }
@@ -80,9 +86,11 @@ namespace Lithnet.GoogleApps
 
             string[] mailParts = mail.Split('@');
 
-            using (GDataServiceWrapper<GoogleMailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take(mailParts[1]))
+            using (PoolItem<EmailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take())
             {
-                connection.Client.CreateDelegate(mailParts[0], @delegate);
+                connection.Item.SetDomain(mailParts[1]);
+
+                connection.Item.CreateDelegate(mailParts[0], @delegate);
             }
         }
 
@@ -95,11 +103,13 @@ namespace Lithnet.GoogleApps
 
             string[] mailParts = mail.Split('@');
 
-            using (GDataServiceWrapper<GoogleMailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take(mailParts[1]))
+            using (PoolItem<EmailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take())
             {
+                connection.Item.SetDomain(mailParts[1]);
+
                 foreach (string @delegate in delegates)
                 {
-                    connection.Client.CreateDelegate(mailParts[0], @delegate);
+                    connection.Item.CreateDelegate(mailParts[0], @delegate);
                 }
             }
         }

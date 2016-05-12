@@ -26,17 +26,15 @@ namespace Lithnet.GoogleApps
 
         private static void GetUsers(string customerID, string fields, BlockingCollection<object> importUsers)
         {
-            int totalUsers = 0;
-
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
-
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
-                UserListRequest request = new UserListRequest(connection.Client);
-                request.Customer = customerID;
-                request.MaxResults = 500;
+                UserListRequest request = new UserListRequest(connection.Item)
+                {
+                    Customer = customerID,
+                    MaxResults = 500
+                };
+
                 if (fields != null)
                 {
                     request.Projection = UserListRequest.ProjectionEnum.Full;
@@ -45,22 +43,15 @@ namespace Lithnet.GoogleApps
 
                 request.PrettyPrint = false;
 
-                UserList pageResults;
-
                 do
                 {
                     request.PageToken = token;
 
-                    pageResults = request.ExecuteWithBackoff();
+                    UserList pageResults = request.ExecuteWithBackoff();
 
                     if (pageResults.UsersValue == null)
                     {
-                        //Logger.WriteLine("LIST USER page request returned no results");
                         break;
-                    }
-                    else
-                    {
-                        //Logger.WriteLine("LIST USER page returned {0} results", pageResults.UsersValue.Count);
                     }
 
                     foreach (User item in pageResults.UsersValue)
@@ -68,32 +59,22 @@ namespace Lithnet.GoogleApps
                         importUsers.Add(item);
                     }
 
-                    totalUsers += pageResults.UsersValue.Count;
                     token = pageResults.NextPageToken;
 
                 } while (token != null);
             }
-
-            timer.Stop();
-
-            //Logger.WriteLine("");
-            //Logger.WriteLine("--------------------------------------------------------");
-            //Logger.WriteLine("User enumeration completed:   {0}", timer.Elapsed);
-            //Logger.WriteLine("");
-            //Logger.WriteLine("Total users                   {0}", totalUsers);
-            //Logger.WriteLine("Back-off retries              {0}", ApiExtensions.BackoffRetries);
         }
 
         public static void SetPassword(string id, string newPassword)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 User user = new User
                 {
                     Password = newPassword
                 };
 
-                UserPatchRequest request = new UserPatchRequest(connection.Client, user, id);
+                UserPatchRequest request = new UserPatchRequest(connection.Item, user, id);
 
                 request.ExecuteWithBackoff();
             }
@@ -101,18 +82,18 @@ namespace Lithnet.GoogleApps
 
         public static void Delete(string id)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                UserDeleteRequest request = new UserDeleteRequest(connection.Client, id);
+                UserDeleteRequest request = new UserDeleteRequest(connection.Item, id);
                 request.ExecuteWithBackoff();
             }
         }
 
         public static void Undelete(string id, string orgUnitPath = "/")
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                UsersResource.UndeleteRequest request = new UsersResource.UndeleteRequest(connection.Client,
+                UsersResource.UndeleteRequest request = new UsersResource.UndeleteRequest(connection.Item,
                     new UserUndelete() {OrgUnitPath = orgUnitPath}, id);
 
                 request.ExecuteWithBackoff();
@@ -121,10 +102,10 @@ namespace Lithnet.GoogleApps
 
         public static IEnumerable<User> GetDeletedUsers(string customerID, string fields)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
-                UserListRequest request = new UserListRequest(connection.Client)
+                UserListRequest request = new UserListRequest(connection.Item)
                 {
                     Customer = customerID,
                     MaxResults = 500,
@@ -161,9 +142,9 @@ namespace Lithnet.GoogleApps
 
         public static User Get(string id, string fields)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                UserGetRequest request = new UserGetRequest(connection.Client, id);
+                UserGetRequest request = new UserGetRequest(connection.Item, id);
 
                 if (fields != null)
                 {
@@ -181,18 +162,18 @@ namespace Lithnet.GoogleApps
 
         public static User Add(User item)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                InsertRequest request = new InsertRequest(connection.Client, item);
+                InsertRequest request = new InsertRequest(connection.Item, item);
                 return request.ExecuteWithBackoff();
             }
         }
 
         public static void MakeAdmin(bool isAdmin, string userKey)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                MakeAdminRequest request = new MakeAdminRequest(connection.Client, isAdmin, userKey);
+                MakeAdminRequest request = new MakeAdminRequest(connection.Item, isAdmin, userKey);
 
                 request.ExecuteWithBackoff();
             }
@@ -200,9 +181,9 @@ namespace Lithnet.GoogleApps
 
         public static User Patch(User item, string userKey)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                UserPatchRequest request = new UserPatchRequest(connection.Client, item, userKey);
+                UserPatchRequest request = new UserPatchRequest(connection.Item, item, userKey);
                 return request.ExecuteWithBackoff();
             }
         }
@@ -214,19 +195,19 @@ namespace Lithnet.GoogleApps
                 return UserRequestFactory.Add(item);
             }
 
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
             {
-                UserUpdateRequest request = new UserUpdateRequest(connection.Client, item, userKey);
+                UserUpdateRequest request = new UserUpdateRequest(connection.Item, item, userKey);
                 return request.ExecuteWithBackoff();
             }
         }
 
         public static IEnumerable<string> GetAliases(string id)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
 
-                UserAliasListRequest request = new UserAliasListRequest(connection.Client, id);
+                UserAliasListRequest request = new UserAliasListRequest(connection.Item, id);
 
                 UserAliases result = request.ExecuteWithBackoff();
                 return result.AliasesValue.Select(t => t.AliasValue);
@@ -235,14 +216,14 @@ namespace Lithnet.GoogleApps
 
         public static void AddAlias(string id, string newAlias)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 UserAlias alias = new UserAlias
                 {
                     AliasValue = newAlias
                 };
 
-                UserAliasInsertRequest request = new UserAliasInsertRequest(connection.Client, alias, id);
+                UserAliasInsertRequest request = new UserAliasInsertRequest(connection.Item, alias, id);
 
                 request.ExecuteWithBackoff();
             }
@@ -250,9 +231,9 @@ namespace Lithnet.GoogleApps
 
         public static void RemoveAlias(string id, string existingAlias)
         {
-            using (BaseClientServiceWrapper<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-                UserAliasDeleteRequest request = new UserAliasDeleteRequest(connection.Client, id, existingAlias);
+                UserAliasDeleteRequest request = new UserAliasDeleteRequest(connection.Item, id, existingAlias);
 
                 request.ExecuteWithBackoff();
             }
