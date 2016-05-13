@@ -6,14 +6,13 @@ using Google.Apis.Json;
 
 namespace Lithnet.GoogleApps
 {
-    public class GoogleJsonSerializer : IJsonSerializer, ISerializer
+    public class GoogleJsonSerializer : IJsonSerializer
     {
         private JsonSerializer newtonsoftSerializer;
 
         public GoogleJsonSerializer()
         {
-            JsonSerializerSettings settings = new JsonSerializerSettings();
-            settings.NullValueHandling = NullValueHandling.Ignore;
+            JsonSerializerSettings settings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
             settings.Converters.Add(new RFC3339DateTimeConverter());
             settings.Converters.Add(new EmptyListConverter());
             settings.Converters.Add(new NotesConverter());
@@ -25,11 +24,11 @@ namespace Lithnet.GoogleApps
         {
             get
             {
-                return newtonsoftSerializer.NullValueHandling;
+                return this.newtonsoftSerializer.NullValueHandling;
             }
             set
             {
-                newtonsoftSerializer.NullValueHandling = value;
+                this.newtonsoftSerializer.NullValueHandling = value;
             }
         }
 
@@ -37,26 +36,18 @@ namespace Lithnet.GoogleApps
         {
             using (StreamReader reader = new StreamReader(input))
             {
-                return (T)newtonsoftSerializer.Deserialize(reader, typeof(T));
+                return (T)this.newtonsoftSerializer.Deserialize(reader, typeof(T));
             }
         }
 
         public T Deserialize<T>(string input)
         {
-            if (string.IsNullOrEmpty(input))
-            {
-                return default(T);
-            }
-            return JsonConvert.DeserializeObject<T>(input);
+            return string.IsNullOrEmpty(input) ? default(T) : JsonConvert.DeserializeObject<T>(input);
         }
 
         public object Deserialize(string input, Type type)
         {
-            if (string.IsNullOrEmpty(input))
-            {
-                return null;
-            }
-            return JsonConvert.DeserializeObject(input, type);
+            return string.IsNullOrEmpty(input) ? null : JsonConvert.DeserializeObject(input, type);
         }
 
         public string Serialize(object obj)
@@ -67,7 +58,7 @@ namespace Lithnet.GoogleApps
                 {
                     obj = string.Empty;
                 }
-                newtonsoftSerializer.Serialize(writer, obj);
+                this.newtonsoftSerializer.Serialize(writer, obj);
                 return writer.ToString();
             }
         }
@@ -80,16 +71,10 @@ namespace Lithnet.GoogleApps
                 {
                     obj = string.Empty;
                 }
-                newtonsoftSerializer.Serialize(writer, obj);
+                this.newtonsoftSerializer.Serialize(writer, obj);
             }
         }
 
-        public string Format
-        {
-            get
-            {
-                return "json";
-            }
-        }
+        public string Format => "json";
     }
 }

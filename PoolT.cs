@@ -16,6 +16,12 @@ namespace Lithnet.GoogleApps
 
         private ConcurrentBag<PoolItem<T>> items;
 
+        private int created;
+
+        private int poolSize;
+
+        private Func<T> itemFactory;
+
         public Pool(int poolSize, Func<T> itemFactory)
         {
             if (poolSize <= 0)
@@ -28,9 +34,10 @@ namespace Lithnet.GoogleApps
                 throw new ArgumentNullException(nameof(itemFactory));
             }
 
+            this.itemFactory = itemFactory;
+            this.poolSize = poolSize;
             this.PoolEmptySleepInterval = 100;
             this.items = new ConcurrentBag<PoolItem<T>>();
-            this.LoadItems(poolSize, itemFactory);
         }
 
         public PoolItem<T> Take()
@@ -41,8 +48,15 @@ namespace Lithnet.GoogleApps
 
                 if (!this.items.TryTake(out item))
                 {
-                    // Pool empty. Sleeping
-                    Thread.Sleep(this.PoolEmptySleepInterval);
+                    if (this.created < this.poolSize)
+                    {
+                        return this.CreateAndAddItem();
+                    }
+                    else
+                    {
+                        // Pool empty. Sleeping
+                        Thread.Sleep(this.PoolEmptySleepInterval);
+                    }
                 }
                 else
                 {
@@ -76,14 +90,14 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        private void LoadItems(int count, Func<T> itemFactory)
+        private PoolItem<T> CreateAndAddItem()
         {
-            for (int i = 0; i < count; i++)
-            {
-                T item = itemFactory();
-                PoolItem<T> wrapper = new PoolItem<T>(this, item);
-                this.items.Add(wrapper);
-            }
+            T item = this.itemFactory();
+            Interlocked.Increment(ref this.created);
+
+            PoolItem<T> wrapper = new PoolItem<T>(this, item);
+            this.items.Add(wrapper);
+            return wrapper;
         }
 
         public int AvailableCount => this.items.Count;
