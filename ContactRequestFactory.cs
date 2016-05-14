@@ -56,14 +56,16 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static Contact GetContact(string id)
+        public static ContactEntry GetContact(string id)
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
-                ContactsRequest cr = new ContactsRequest(new RequestSettings("Lithnet.GoogleApps"));
-                cr.Service = connection.Item;
+                return (ContactEntry)connection.Item.Get(id);
 
-                return cr.Retrieve<Contact>(new Uri(id));
+                //ContactsRequest cr = new ContactsRequest(new RequestSettings("Lithnet.GoogleApps"));
+                //cr.Service = connection.Item;
+
+                //return cr.Retrieve<Contact>(new Uri(id));
             }
         }
 
@@ -71,11 +73,12 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
-                ContactsRequest cr = new ContactsRequest(new RequestSettings("Lithnet.GoogleApps"));
-                cr.Service = connection.Item;
+                connection.Item.Delete(id);
+                //ContactsRequest cr = new ContactsRequest(new RequestSettings("Lithnet.GoogleApps"));
+                //cr.Service = connection.Item;
 
-                Contact c= cr.Retrieve<Contact>(new Uri(id));
-                connection.Item.Delete(c.ContactEntry.EditUri.ToString());
+                //Contact c= cr.Retrieve<Contact>(new Uri(id));
+                //connection.Item.Delete(c.ContactEntry.EditUri.ToString());
             }
         }
 
@@ -87,33 +90,35 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static void DeleteContact(Contact c)
+        //public static void DeleteContact(Contact c)
+        //{
+        //    using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
+        //    {
+        //        connection.Item.Delete(c.ContactEntry);
+        //    }
+        //}
+
+
+        public static ContactEntry UpdateContact(ContactEntry c)
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
-                connection.Item.Delete(c.ContactEntry);
+                return connection.Item.Update(c);
+                //ContactsRequest cr = new ContactsRequest(new RequestSettings("Lithnet.GoogleApps"));
+                //cr.Service = connection.Item;
+                //return cr.Update(c);
             }
         }
 
-
-        public static Contact UpdateContact(Contact c)
+        public static ContactEntry CreateContact(ContactEntry c, string domain)
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
-                ContactsRequest cr = new ContactsRequest(new RequestSettings("Lithnet.GoogleApps"));
-                cr.Service = connection.Item;
-                return cr.Update(c);
-            }
-        }
+                return connection.Item.Insert($"https://www.google.com/m8/feeds/contacts/{domain}/full", c);
+                //ContactsRequest cr = new ContactsRequest(new RequestSettings("Lithnet.GoogleApps"));
+                //cr.Service = connection.Item;
 
-        public static Contact CreateContact(Contact c, string domain)
-        {
-            using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
-            {
-                ContactsRequest cr = new ContactsRequest(new RequestSettings("Lithnet.GoogleApps"));
-                cr.Service = connection.Item;
-                
-                return cr.Insert(new Uri($"https://www.google.com/m8/feeds/contacts/{domain}/full"), c);
+                //return cr.Insert(new Uri($"https://www.google.com/m8/feeds/contacts/{domain}/full"), c);
             }
         }
     }
