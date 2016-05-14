@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Lithnet.GoogleApps
 {
     using System.Collections.Concurrent;
     using System.Diagnostics;
+    using System.IO;
     using Api;
     using Google.Apis.Admin.Directory.directory_v1;
     using Google.Contacts;
@@ -73,7 +75,8 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
-                connection.Item.Delete(id);
+                ContactEntry e = (ContactEntry)(connection.Item.Get(id));
+                connection.Item.Delete(e);
                 //ContactsRequest cr = new ContactsRequest(new RequestSettings("Lithnet.GoogleApps"));
                 //cr.Service = connection.Item;
 
