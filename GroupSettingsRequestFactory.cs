@@ -48,29 +48,44 @@ namespace Lithnet.GoogleApps
             });
         }
 
-        public static GroupSettings Get(string groupKey)
+        public static GroupSettings Get(string mail)
         {
+            if (mail.IndexOf("@", StringComparison.Ordinal) < 1)
+            {
+                throw new ArgumentException("The group key must be the group email address");
+            }
+
             using (PoolItem<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
             {
-                GroupSettingsGetRequest request = new GroupSettingsGetRequest(connection.Item, groupKey);
+                GroupSettingsGetRequest request = new GroupSettingsGetRequest(connection.Item, mail);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static GroupSettings Update(string groupKey, GroupSettings item)
+        public static GroupSettings Update(string mail, GroupSettings item)
         {
+            if (mail.IndexOf("@", StringComparison.Ordinal) < 1)
+            {
+                throw new ArgumentException("The group key must be the group email address");
+            }
+
             using (PoolItem<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Include))
             {
-                GroupSettingsUpdateRequest request = new GroupSettingsUpdateRequest(connection.Item, item, groupKey);
+                GroupSettingsUpdateRequest request = new GroupSettingsUpdateRequest(connection.Item, item, mail);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static GroupSettings Patch(string groupKey, GroupSettings item)
+        public static GroupSettings Patch(string mail, GroupSettings item)
         {
+            if (mail.IndexOf("@", StringComparison.Ordinal) < 1)
+            {
+                throw new ArgumentException("The group key must be the group email address");
+            }
+
             using (PoolItem<GS.GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
             {
-                GroupSettingsPatchRequest request = new GroupSettingsPatchRequest(connection.Item, item, groupKey);
+                GroupSettingsPatchRequest request = new GroupSettingsPatchRequest(connection.Item, item, mail);
                 return request.ExecuteWithBackoff();
             }
         }
