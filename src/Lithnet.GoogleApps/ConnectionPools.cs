@@ -50,8 +50,7 @@ namespace Lithnet.GoogleApps
             {
                 credentials.RequestAccessTokenAsync(System.Threading.CancellationToken.None).Wait();
                 EmailSettingsService service = new EmailSettingsService("Lithnet.GoogleApps");
-                GDataRequestFactory requestFactory = new GDataRequestFactory("Lithnet.GoogleApps");
-                requestFactory.CustomHeaders.Add($"Authorization: Bearer {credentials.Token.AccessToken}");
+                OAuthGDataRequestFactory requestFactory = new OAuthGDataRequestFactory("Lithnet.GoogleApps", credentials);
                 requestFactory.UseGZip = !ConnectionPools.DisableGzip;
                 service.RequestFactory = requestFactory;
                 return service;
@@ -64,8 +63,7 @@ namespace Lithnet.GoogleApps
             {
                 credentials.RequestAccessTokenAsync(System.Threading.CancellationToken.None).Wait();
                 ContactsService service = new ContactsService("Lithnet.GoogleApps");
-                GDataRequestFactory requestFactory = new GDataRequestFactory("Lithnet.GoogleApps");
-                requestFactory.CustomHeaders.Add($"Authorization: Bearer {credentials.Token.AccessToken}");
+                OAuthGDataRequestFactory requestFactory = new OAuthGDataRequestFactory("Lithnet.GoogleApps", credentials);
                 requestFactory.CustomHeaders.Add("GData-Version: 3.0");
                 requestFactory.UseGZip = !ConnectionPools.DisableGzip;
                 service.RequestFactory = requestFactory;

@@ -1,25 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using Google.GData.Contacts;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace Lithnet.GoogleApps
 {
-    using System.Collections.Concurrent;
-    using System.Diagnostics;
-    using System.IO;
-    using Api;
-    using Google.Apis.Admin.Directory.directory_v1;
-    using Google.Contacts;
-    using Google.GData.Apps;
-    using Google.GData.Contacts;
-    using Google.GData.Client;
-    using Google.GData.Extensions.Apps;
-    using ManagedObjects;
-    using Newtonsoft.Json;
-
     public static class ContactRequestFactory
     {
         public static void GetContacts(string domain,  BlockingCollection<object> importObjects)
@@ -35,7 +21,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
                 string uri = ContactsQuery.CreateContactsUri(domain);
-
+             
                 do
                 {
                     ContactsQuery request = new ContactsQuery(uri)

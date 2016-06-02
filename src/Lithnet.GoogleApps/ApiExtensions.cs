@@ -17,7 +17,7 @@ namespace Lithnet.GoogleApps
 
         public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request)
         {
-            return ApiExtensions.ExecuteWithBackoff(request, 8);
+            return request.ExecuteWithBackoff(8);
         }
 
         public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request, int retryAttemps)
