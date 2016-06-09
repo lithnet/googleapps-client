@@ -206,10 +206,15 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
-
                 UserAliasListRequest request = new UserAliasListRequest(connection.Item, id);
 
                 UserAliases result = request.ExecuteWithBackoff();
+
+                if (result.AliasesValue == null)
+                {
+                    return new List<string>();
+                }
+
                 return result.AliasesValue.Select(t => t.AliasValue);
             }
         }
