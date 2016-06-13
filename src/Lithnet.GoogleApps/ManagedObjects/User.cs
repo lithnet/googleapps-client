@@ -62,7 +62,12 @@
         {
             get
             {
-                return Utilities.GetDateTimeFromString(this.DeletionTimeRaw);
+                if (this.DeletionTimeRaw == null)
+                {
+                    return null;
+                }
+
+                return DateTime.ParseExact(this.DeletionTimeRaw, @"MM/dd/yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal);
             }
             private set
             {
@@ -100,7 +105,12 @@
         {
             get
             {
-                return Utilities.GetDateTimeFromString(this.LastLoginTimeRaw);
+                if (this.LastLoginTimeRaw == null)
+                {
+                    return null;
+                }
+
+                return DateTime.ParseExact(this.LastLoginTimeRaw, @"MM/dd/yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal);
             }
             private set
             {
