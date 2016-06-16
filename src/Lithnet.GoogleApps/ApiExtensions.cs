@@ -6,6 +6,8 @@ using System.Net;
 using System.Threading;
 using System.Net.Http;
 using Google.Apis.Requests;
+using System.Security;
+using System.Runtime.InteropServices;
 
 namespace Lithnet.GoogleApps
 {
@@ -110,6 +112,23 @@ namespace Lithnet.GoogleApps
                 {
                     throw;
                 }
+            }
+        }
+
+        public static string ConvertToUnsecureString(this SecureString securePassword)
+        {
+            if (securePassword == null)
+                throw new ArgumentNullException(nameof(securePassword));
+
+            IntPtr unmanagedString = IntPtr.Zero;
+            try
+            {
+                unmanagedString = Marshal.SecureStringToGlobalAllocUnicode(securePassword);
+                return Marshal.PtrToStringUni(unmanagedString);
+            }
+            finally
+            {
+                Marshal.ZeroFreeGlobalAllocUnicode(unmanagedString);
             }
         }
     }

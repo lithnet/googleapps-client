@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Admin.Directory.directory_v1.Data;
 using User = Lithnet.GoogleApps.ManagedObjects.User;
+using System.Security;
 
 namespace Lithnet.GoogleApps
 {
@@ -72,6 +73,21 @@ namespace Lithnet.GoogleApps
                 User user = new User
                 {
                     Password = newPassword
+                };
+
+                UserPatchRequest request = new UserPatchRequest(connection.Item, user, id);
+
+                request.ExecuteWithBackoff();
+            }
+        }
+
+        public static void SetPassword(string id, SecureString newPassword)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                User user = new User
+                {
+                    SecurePassword = newPassword
                 };
 
                 UserPatchRequest request = new UserPatchRequest(connection.Item, user, id);

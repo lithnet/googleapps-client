@@ -9,9 +9,13 @@
     using System.Runtime.Serialization;
     using System.Collections.ObjectModel;
     using System.Collections;
-
+    using System.Security.Cryptography;
+    using System.Text;
+    using System.Security;
     public class User : IDirectResponseSchema, ISerializable
     {
+        private static SHA1 sha = new SHA1CryptoServiceProvider();
+
         public List<Address> Addresses { get; set; }
 
         public bool? AgreedToTerms { get; private set; }
@@ -147,6 +151,8 @@
 
         public string Password { get; set; }
 
+        public SecureString SecurePassword { get; set; }
+        
         public List<Phone> Phones { get; set; }
 
         public string PrimaryEmail { get; set; }
@@ -174,13 +180,13 @@
         }
 
         public User(bool creating)
-            :this()
+            : this()
         {
             this.Creating = creating;
         }
 
         protected User(SerializationInfo info, StreamingContext context)
-            :this()
+            : this()
         {
             foreach (SerializationEntry entry in info)
             {
@@ -338,7 +344,7 @@
 
             if (this.Addresses != null)
             {
-                    info.AddValue("addresses", this.Addresses);
+                info.AddValue("addresses", this.Addresses);
             }
 
             if (this.CustomerId != null)
@@ -383,10 +389,7 @@
 
             if (this.Notes != null)
             {
-                //if (this.Notes.Value != null)
-                //{
-                    info.AddValue("notes", this.Notes);
-                //}
+                info.AddValue("notes", this.Notes);
             }
 
             if (this.Organizations != null)
@@ -399,9 +402,19 @@
                 info.AddValue("orgUnitPath", this.OrgUnitPath);
             }
 
-            if (this.Password != null)
+            if (this.Password != null || this.SecurePassword != null)
             {
-                info.AddValue("password", this.Password);
+                string password = this.Password ?? this.SecurePassword.ConvertToUnsecureString();
+                byte[] hash = sha.ComputeHash(Encoding.ASCII.GetBytes(password));
+                StringBuilder builder = new StringBuilder();
+
+                for (int i = 0; i < hash.Length; i++)
+                {
+                    builder.Append(hash[i].ToString("x2"));
+                }
+
+                info.AddValue("password", builder.ToString());
+                info.AddValue("hashFunction", "SHA-1");
             }
 
             if (this.Phones != null)
