@@ -26,5 +26,33 @@ namespace Lithnet.GoogleApps
                 return request.ExecuteWithBackoff();
             }
         }
+
+        public static Domain GetDomain(string customerID, string domain)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                DomainGetRequest request = new DomainGetRequest(connection.Item, domain, customerID);
+
+                return request.ExecuteWithBackoff();
+            }
+        }
+
+        public static void DeleteDomain(string customerID, string domain)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                DomainDeleteRequest request = new DomainDeleteRequest(connection.Item, domain, customerID);
+                request.ExecuteWithBackoff();
+            }
+        }
+
+        public static void InsertDomain(string customerID, Domain domain)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                DomainInsertRequest request = new DomainInsertRequest(connection.Item, customerID, domain);
+                request.ExecuteWithBackoff();
+            }
+        }
     }
 }

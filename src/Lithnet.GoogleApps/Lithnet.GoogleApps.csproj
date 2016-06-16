@@ -40,6 +40,8 @@
   <ItemGroup>
     <Compile Include="AggregateGroupUpdateException.cs" />
     <Compile Include="ApiExtensions.cs" />
+    <Compile Include="Api\DomainInsertRequest.cs" />
+    <Compile Include="Api\DomainDeleteRequest.cs" />
     <Compile Include="Api\GroupSettingsPatchRequest.cs" />
     <Compile Include="Api\GroupSettingsUpdateRequest.cs" />
     <Compile Include="Api\GroupSettingsGetRequest.cs" />
