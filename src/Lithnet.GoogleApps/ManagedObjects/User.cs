@@ -14,7 +14,6 @@
     using System.Security;
     public class User : IDirectResponseSchema, ISerializable
     {
-        private static SHA1 sha = new SHA1CryptoServiceProvider();
 
         public List<Address> Addresses { get; set; }
 
@@ -152,7 +151,7 @@
         public string Password { get; set; }
 
         public SecureString SecurePassword { get; set; }
-        
+
         public List<Phone> Phones { get; set; }
 
         public string PrimaryEmail { get; set; }
@@ -402,19 +401,22 @@
                 info.AddValue("orgUnitPath", this.OrgUnitPath);
             }
 
-            if (this.Password != null || this.SecurePassword != null)
+            if (!(string.IsNullOrEmpty(this.Password) && this.SecurePassword == null))
             {
-                string password = this.Password ?? this.SecurePassword.ConvertToUnsecureString();
-                byte[] hash = sha.ComputeHash(Encoding.ASCII.GetBytes(password));
-                StringBuilder builder = new StringBuilder();
-
-                for (int i = 0; i < hash.Length; i++)
+                using (SHA1 sha = new SHA1CryptoServiceProvider())
                 {
-                    builder.Append(hash[i].ToString("x2"));
-                }
+                    string password = this.Password ?? this.SecurePassword.ConvertToUnsecureString();
+                    byte[] hash = sha.ComputeHash(Encoding.ASCII.GetBytes(password));
+                    StringBuilder builder = new StringBuilder();
 
-                info.AddValue("password", builder.ToString());
-                info.AddValue("hashFunction", "SHA-1");
+                    for (int i = 0; i < hash.Length; i++)
+                    {
+                        builder.Append(hash[i].ToString("x2"));
+                    }
+
+                    info.AddValue("password", builder.ToString());
+                    info.AddValue("hashFunction", "SHA-1");
+                }
             }
 
             if (this.Phones != null)
