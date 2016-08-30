@@ -23,6 +23,9 @@
         [JsonProperty("customReplyTo"), JsonConverter(typeof(JsonNullStringConverter))]
         public string CustomReplyTo { get; set; }
 
+        [JsonProperty("customFooterText"), JsonConverter(typeof(JsonNullStringConverter))]
+        public string CustomFooterText { get; set; }
+
         [JsonProperty("defaultMessageDenyNotificationText"), JsonConverter(typeof(JsonNullStringConverter))]
         public string DefaultMessageDenyNotificationText { get; set; }
 
@@ -33,6 +36,9 @@
         public string Email { get; set; }
 
         public string ETag { get; set; }
+
+        [JsonProperty("includeCustomFooter")]
+        public bool? IncludeCustomFooter { get; set; }
 
         [JsonProperty("includeInGlobalAddressList")]
         public bool? IncludeInGlobalAddressList { get; set; }
@@ -78,6 +84,9 @@
 
         [JsonProperty("whoCanInvite")]
         public string WhoCanInvite { get; set; }
+
+        [JsonProperty("whoCanAdd")]
+        public string WhoCanAdd { get; set; }
 
         [JsonProperty("whoCanJoin")]
         public string WhoCanJoin { get; set; }
@@ -131,6 +140,18 @@
                             this.CustomReplyTo = customReplyTo;
                         }
                         break;
+                        
+                    case "customFooterText":
+                        string customFooterText = info.GetString(entry.Name);
+                        if (string.IsNullOrEmpty(customFooterText))
+                        {
+                            this.CustomFooterText = null;
+                        }
+                        else
+                        {
+                            this.CustomFooterText = customFooterText;
+                        }
+                        break;
 
                     case "defaultMessageDenyNotificationText":
                         string defaultMessageDenyNotificationText = info.GetString(entry.Name);
@@ -180,6 +201,10 @@
                         this.SpamModerationLevel = info.GetString(entry.Name);
                         break;
 
+                    case "whoCanAdd":
+                        this.WhoCanAdd = info.GetString(entry.Name);
+                        break;
+
                     case "whoCanContactOwner":
                         this.WhoCanContactOwner = info.GetString(entry.Name);
                         break;
@@ -210,6 +235,10 @@
 
                     case "includeInGlobalAddressList":
                         this.IncludeInGlobalAddressList = info.GetString(entry.Name).ToNullableBool();
+                        break;
+
+                    case "includeCustomFooter":
+                        this.IncludeCustomFooter = info.GetString(entry.Name).ToNullableBool();
                         break;
 
                     case "isArchived":
@@ -261,6 +290,11 @@
             {
                 info.AddValue("includeInGlobalAddressList", this.IncludeInGlobalAddressList.Value.ToLowerString());
             }
+            
+            if (this.IncludeCustomFooter != null)
+            {
+                info.AddValue("includeCustomFooter", this.IncludeCustomFooter.Value.ToLowerString());
+            }
 
             if (this.IsArchived != null)
             {
@@ -291,6 +325,18 @@
                 else
                 {
                     info.AddValue("customReplyTo", this.CustomReplyTo);
+                }
+            }
+
+            if (this.CustomFooterText != null)
+            {
+                if (this.CustomFooterText == Constants.NullValuePlaceholder)
+                {
+                    info.AddValue("customFooterText", string.Empty);
+                }
+                else
+                {
+                    info.AddValue("customFooterText", this.CustomFooterText);
                 }
             }
 
@@ -345,7 +391,12 @@
             {
                 info.AddValue("spamModerationLevel", this.SpamModerationLevel);
             }
-
+            
+            if (this.WhoCanAdd != null)
+            {
+                info.AddValue("whoCanAdd", this.WhoCanAdd);
+            }
+            
             if (this.WhoCanContactOwner != null)
             {
                 info.AddValue("whoCanContactOwner", this.WhoCanContactOwner);

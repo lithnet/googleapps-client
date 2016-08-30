@@ -7,6 +7,7 @@ using System.Diagnostics;
 using Google.Apis.Admin.Directory.directory_v1.Data;
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Lithnet.GoogleApps
 {
@@ -188,7 +189,7 @@ namespace Lithnet.GoogleApps
             {
                 GroupsResource.AliasesResource.ListRequest request = connection.Item.Groups.Aliases.List(id);
                 Aliases aliases = request.ExecuteWithBackoff();
-                return aliases.AliasesValue.Select(t => t.AliasValue);
+                return aliases.AliasesValue.OfType<JObject>().Select(t => t.Value<string>("alias"));
             }
         }
     }
