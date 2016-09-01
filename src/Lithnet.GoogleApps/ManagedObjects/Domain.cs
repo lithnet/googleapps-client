@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using Google.Apis.Requests;
@@ -29,6 +30,15 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
         [JsonProperty("creationTime")]
         private long CreationTimeRaw { get; set; }
+
+        [JsonIgnore]
+        public IReadOnlyCollection<string> DomainAliasNames
+        {
+            get
+            {
+                return this.DomainAliases?.Select(t => t.DomainAliasName).ToList().AsReadOnly();
+            }
+        }
 
         [JsonIgnore]
         public DateTime? CreationTime

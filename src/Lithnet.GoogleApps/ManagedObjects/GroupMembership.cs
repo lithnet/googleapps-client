@@ -129,7 +129,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
             //Logging.Logger.WriteLine("Querying for internal domains");
 
-            foreach (Domain domain in DomainsRequestFactory.GetDomains("my_customer").Domains)
+            foreach (Domain domain in DomainsRequestFactory.List("my_customer").Domains)
             {
                 GroupMembership.internalDomains.Add(domain.DomainName);
                 //Logging.Logger.WriteLine("Got internal domain {0}", domain.DomainName);
