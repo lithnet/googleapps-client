@@ -1,23 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
-
+﻿using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {
     public class Email : CustomTypeObject, IPrimaryCandidateObject
     {
         [JsonIgnore]
-        protected override string[] StandardTypes
-        {
-            get
-            {
-
-                return new string[] { "home", "work", "other" };
-            }
-        }
+        protected override string[] StandardTypes => new string[] { "home", "work", "other" };
 
         [JsonProperty("address"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Address { get; set; }
@@ -26,13 +14,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
         public bool? Primary { get; set; }
       
         [JsonIgnore]
-        public bool IsPrimary
-        {
-            get
-            {
-                return this.Primary != null ? this.Primary.Value : false;
-            }
-        }
+        public bool IsPrimary => this.Primary ?? false;
 
         public override bool IsEmpty()
         {

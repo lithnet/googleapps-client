@@ -1,20 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Google.Apis.Admin.Directory.directory_v1;
+﻿using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Groupssettings.v1;
 using Google.Apis.Services;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Http;
-using Newtonsoft.Json;
+using Google.GData.Contacts;
 
 namespace Lithnet.GoogleApps
 {
-    using Google.GData.Apps.GoogleMailSettings;
-    using Google.GData.Client;
-    using Google.GData.Contacts;
-
     public static class ConnectionPools
     {
         public static bool DisableGzip { get; set; }

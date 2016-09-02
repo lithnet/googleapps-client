@@ -7,7 +7,7 @@ using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps.Api
 {
-    public class MakeAdminRequest : DirectoryBaseServiceRequest<UserAlias>
+    public sealed class MakeAdminRequest : DirectoryBaseServiceRequest<UserAlias>
     {
         public MakeAdminRequest(IClientService service, bool makeAdmin, string userKey)
             : base(service)
@@ -48,5 +48,4 @@ namespace Lithnet.GoogleApps.Api
         [RequestParameter("userKey", RequestParameterType.Path)]
         public string UserKey { get; private set; }
     }
-
 }

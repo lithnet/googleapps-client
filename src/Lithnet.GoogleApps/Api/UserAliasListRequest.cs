@@ -1,5 +1,4 @@
-﻿using System;
-using Google.Apis.Admin.Directory.directory_v1;
+﻿using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Discovery;
 using Google.Apis.Services;
 using Google.Apis.Util;
@@ -7,7 +6,7 @@ using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps.Api
 {
-    public class UserAliasListRequest : DirectoryBaseServiceRequest<UserAliases>
+    public sealed class UserAliasListRequest : DirectoryBaseServiceRequest<UserAliases>
     {
         public UserAliasListRequest(IClientService service, string userKey)
             : base(service)
@@ -40,31 +39,13 @@ namespace Lithnet.GoogleApps.Api
         }
 
         [RequestParameter("event", RequestParameterType.Query)]
-        public virtual EventEnum? Event { get; set; }
+        public EventEnum? Event { get; set; }
 
-        public override string HttpMethod
-        {
-            get
-            {
-                return "GET";
-            }
-        }
+        public override string HttpMethod => "GET";
 
-        public override string MethodName
-        {
-            get
-            {
-                return "list";
-            }
-        }
+        public override string MethodName => "list";
 
-        public override string RestPath
-        {
-            get
-            {
-                return "users/{userKey}/aliases";
-            }
-        }
+        public override string RestPath => "users/{userKey}/aliases";
 
         [RequestParameter("userKey", RequestParameterType.Path)]
         public string UserKey { get; private set; }

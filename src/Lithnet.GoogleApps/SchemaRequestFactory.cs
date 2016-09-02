@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using Google.Apis.Admin.Directory.directory_v1.Data;
-using System.Collections.Concurrent;
+﻿using Google.Apis.Admin.Directory.directory_v1.Data;
 using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps
@@ -14,10 +7,6 @@ namespace Lithnet.GoogleApps
 
     public static class SchemaRequestFactory
     {
-        static SchemaRequestFactory()
-        {
-        }
-
         public static void CreateSchema(string customerID, Schema schema)
         {
             using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))

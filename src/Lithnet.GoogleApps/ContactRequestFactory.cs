@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using Google.GData.Contacts;
+﻿using Google.GData.Contacts;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,14 +6,6 @@ namespace Lithnet.GoogleApps
 {
     public static class ContactRequestFactory
     {
-        public static void GetContacts(string domain,  BlockingCollection<object> importObjects)
-        {
-            foreach (ContactEntry entry in GetContacts(domain))
-            {
-                importObjects.Add(entry);
-            }
-        }
-
         public static IEnumerable<ContactEntry> GetContacts(string domain)
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())

@@ -1,5 +1,4 @@
-﻿using System;
-using Google.GData.Apps.GoogleMailSettings;
+﻿using Google.GData.Apps.GoogleMailSettings;
 
 namespace Lithnet.GoogleApps
 {

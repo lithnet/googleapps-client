@@ -1,5 +1,4 @@
-﻿using System;
-using Google.Apis.Admin.Directory.directory_v1;
+﻿using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Discovery;
 using Google.Apis.Services;
 using Google.Apis.Util;
@@ -7,7 +6,7 @@ using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps.Api
 {
-    public class UserGetRequest : DirectoryBaseServiceRequest<User>
+    public sealed class UserGetRequest : DirectoryBaseServiceRequest<User>
     {
         public UserGetRequest(IClientService service, string userKey)
             : base(service)
@@ -58,40 +57,22 @@ namespace Lithnet.GoogleApps.Api
         }
 
         [RequestParameter("customFieldMask", RequestParameterType.Query)]
-        public virtual string CustomFieldMask { get; set; }
+        public string CustomFieldMask { get; set; }
 
-        public override string HttpMethod
-        {
-            get
-            {
-                return "GET";
-            }
-        }
+        public override string HttpMethod => "GET";
 
-        public override string MethodName
-        {
-            get
-            {
-                return "get";
-            }
-        }
+        public override string MethodName => "get";
 
         [RequestParameter("projection", RequestParameterType.Query)]
-        public virtual ProjectionEnum? Projection { get; set; }
+        public ProjectionEnum? Projection { get; set; }
 
-        public override string RestPath
-        {
-            get
-            {
-                return "users/{userKey}";
-            }
-        }
+        public override string RestPath => "users/{userKey}";
 
         [RequestParameter("userKey", RequestParameterType.Path)]
         public string UserKey { get; private set; }
 
         [RequestParameter("viewType", RequestParameterType.Query)]
-        public virtual ViewTypeEnum? ViewType { get; set; }
+        public ViewTypeEnum? ViewType { get; set; }
 
         public enum ProjectionEnum
         {

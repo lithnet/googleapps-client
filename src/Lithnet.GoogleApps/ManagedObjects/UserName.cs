@@ -2,8 +2,6 @@
 {
     using Google.Apis.Requests;
     using Newtonsoft.Json;
-    using System;
-    using System.Runtime.CompilerServices;
     using System.Runtime.Serialization;
 
     public class UserName : IDirectResponseSchema, ISerializable

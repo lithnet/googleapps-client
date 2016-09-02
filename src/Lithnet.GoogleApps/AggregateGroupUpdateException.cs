@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Lithnet.GoogleApps
 {
@@ -17,7 +15,7 @@ namespace Lithnet.GoogleApps
         }
 
         public AggregateGroupUpdateException(string groupId, IEnumerable<string> memberKeys)
-            : base(string.Format("The group member update operation failed. Group ID {0}", groupId))
+            : base($"The group member update operation failed. Group ID {groupId}")
         {
             this.FailedMembers = memberKeys;
         }

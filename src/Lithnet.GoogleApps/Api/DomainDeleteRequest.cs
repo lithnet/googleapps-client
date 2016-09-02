@@ -2,11 +2,10 @@
 using Google.Apis.Discovery;
 using Google.Apis.Services;
 using Google.Apis.Util;
-using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps.Api
 {
-    public class DomainDeleteRequest : DirectoryBaseServiceRequest<string>
+    public sealed class DomainDeleteRequest : DirectoryBaseServiceRequest<string>
     {
         public DomainDeleteRequest(IClientService service, string domainName, string customer)
             : base(service)
@@ -46,28 +45,10 @@ namespace Lithnet.GoogleApps.Api
             base.RequestParameters.Add(parameter.Name, parameter);
         }
 
-        public override string HttpMethod
-        {
-            get
-            {
-                return "DELETE";
-            }
-        }
+        public override string HttpMethod => "DELETE";
 
-        public override string MethodName
-        {
-            get
-            {
-                return "delete";
-            }
-        }
+        public override string MethodName => "delete";
 
-        public override string RestPath
-        {
-            get
-            {
-                return "customer/{customer}/domains/{domainName}";
-            }
-        }
+        public override string RestPath => "customer/{customer}/domains/{domainName}";
     }
 }

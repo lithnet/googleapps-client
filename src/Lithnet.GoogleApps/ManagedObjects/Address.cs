@@ -1,23 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
-using Lithnet.GoogleApps;
+﻿using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {
     public class Address : CustomTypeObject, IPrimaryCandidateObject
     {
         [JsonIgnore]
-        protected override string[] StandardTypes
-        {
-            get
-            {
-
-                return new string[] { "home", "work", "other" };
-            }
-        }
+        protected override string[] StandardTypes => new string[] { "home", "work", "other" };
 
         [JsonProperty("sourceIsStructured")]
         public bool? SourceIsStructured { get; set; }
@@ -53,13 +41,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
         public string CountryCode { get; set; }
 
         [JsonIgnore]
-        public bool IsPrimary
-        {
-            get
-            {
-                return this.Primary != null ? this.Primary.Value : false;
-            }
-        }
+        public bool IsPrimary => this.Primary ?? false;
 
         public override bool IsEmpty()
         {
@@ -77,7 +59,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
         public override string ToString()
         {
-            return string.Format("{0}", this.Type);
+            return $"{this.Type}";
         }
     }
 }

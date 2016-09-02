@@ -2,19 +2,16 @@
 {
     using Google.Apis.Requests;
     using Google.Apis.Util;
-    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
-    using System.Runtime.CompilerServices;
     using System.Runtime.Serialization;
     using System.Collections.ObjectModel;
-    using System.Collections;
     using System.Security.Cryptography;
     using System.Text;
     using System.Security;
+
     public class User : IDirectResponseSchema, ISerializable
     {
-
         public List<Address> Addresses { get; set; }
 
         public bool? AgreedToTerms { get; private set; }

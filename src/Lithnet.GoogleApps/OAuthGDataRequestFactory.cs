@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
+using Google.GData.Client;
 
 namespace Lithnet.GoogleApps
 {
-    using System.Threading;
-    using Google.Apis.Auth.OAuth2;
-    using Google.Apis.Util;
-    using Google.GData.Client;
     public class OAuthGDataRequestFactory : GDataRequestFactory
     {
         public ServiceAccountCredential Credentials { get; set; }

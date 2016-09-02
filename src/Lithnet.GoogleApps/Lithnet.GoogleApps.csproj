@@ -42,6 +42,11 @@
     <Compile Include="ApiExtensions.cs" />
     <Compile Include="Api\DomainInsertRequest.cs" />
     <Compile Include="Api\DomainDeleteRequest.cs" />
+    <Compile Include="Api\Enums\OrderByEnum.cs" />
+    <Compile Include="Api\Enums\ProjectionEnum.cs" />
+    <Compile Include="Api\Enums\SortOrderEnum.cs" />
+    <Compile Include="Api\Enums\ViewTypeEnum.cs" />
+    <Compile Include="Api\Enums\EventEnum.cs" />
     <Compile Include="Api\GroupSettingsPatchRequest.cs" />
     <Compile Include="Api\GroupSettingsUpdateRequest.cs" />
     <Compile Include="Api\GroupSettingsGetRequest.cs" />

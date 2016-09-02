@@ -1,16 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Google.GData.Apps;
+using Google.GData.Extensions.Apps;
 
 namespace Lithnet.GoogleApps
 {
-    using Google.GData.Apps;
-    using Google.GData.Apps.GoogleMailSettings;
-    using Google.GData.Client;
-    using Google.GData.Extensions.Apps;
-
     public static class UserSettingsRequestFactory
     {
         public static IEnumerable<string> GetDelegates(string mail)

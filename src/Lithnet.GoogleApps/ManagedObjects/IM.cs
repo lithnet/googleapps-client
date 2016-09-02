@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects
@@ -9,16 +6,9 @@ namespace Lithnet.GoogleApps.ManagedObjects
     public class IM : CustomTypeObject, IPrimaryCandidateObject
     {
         [JsonIgnore]
-        protected override string[] StandardTypes
-        {
-            get
-            {
+        protected override string[] StandardTypes => new string[] { "home", "work", "other" };
 
-                return new string[] { "home", "work", "other" };
-            }
-        }
-
-        private static string[] StandardProtocols = { "aim", "gtalk", "icq", "jabber", "msn", "net_meeting", "qq", "skype", "yahoo" };
+        private static string[] standardProtocols = { "aim", "gtalk", "icq", "jabber", "msn", "net_meeting", "qq", "skype", "yahoo" };
 
         [JsonProperty("im"), JsonConverter(typeof(JsonNullStringConverter))]
         public string IMAddress { get; set; }
@@ -48,7 +38,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
             set
             {
-                if (IM.StandardProtocols.Contains(value))
+                if (IM.standardProtocols.Contains(value))
                 {
                     this.ProtocolRaw = value;
                     this.CustomProtocolRaw = Constants.NullValuePlaceholder;
@@ -62,13 +52,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
         }
 
         [JsonIgnore]
-        public bool IsPrimary
-        {
-            get
-            {
-                return this.Primary != null ? this.Primary.Value : false;
-            }
-        }
+        public bool IsPrimary => this.Primary ?? false;
 
         public override bool IsEmpty()
         {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Google.Apis.Requests;
+﻿using Google.Apis.Requests;
 using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects

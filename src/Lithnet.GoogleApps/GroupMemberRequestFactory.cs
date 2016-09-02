@@ -1,10 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Collections.Concurrent;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Admin.Directory.directory_v1.Data;
@@ -17,39 +12,6 @@ namespace Lithnet.GoogleApps
 
     public static class GroupMemberRequestFactory
     {
-        private static BlockingCollection<GoogleGroup> queue = new BlockingCollection<GoogleGroup>();
-
-        public static void AddJob(GoogleGroup group)
-        {
-            GroupMemberRequestFactory.queue.Add(group);
-        }
-
-        public static void CompleteAdding()
-        {
-            GroupMemberRequestFactory.queue.CompleteAdding();
-        }
-
-        public static void ConsumeQueue(int threads)
-        {
-            ParallelOptions op = new ParallelOptions {MaxDegreeOfParallelism = threads};
-
-            Parallel.ForEach(queue.GetConsumingEnumerable(), op, (myGroup) =>
-            {
-                try
-                {
-                    myGroup.Membership = GetMembership(myGroup.Group.Email);
-                }
-                catch (AggregateException ex)
-                {
-                    myGroup.Errors.Add(ex.InnerException);
-                }
-                catch (Exception ex)
-                {
-                    myGroup.Errors.Add(ex);
-                }
-            });
-        }
-
         public static GroupMembership GetMembership(string groupKey)
         {
             Stopwatch timer = new Stopwatch();
@@ -151,7 +113,6 @@ namespace Lithnet.GoogleApps
 
                               if (error == null)
                               {
-                                  //Logger.WriteLine("Member '{1}' added to group {0}", id, itemKey.Email);
                                   return;
                               }
 
@@ -165,7 +126,6 @@ namespace Lithnet.GoogleApps
                               {
                                   if (message.StatusCode == System.Net.HttpStatusCode.Conflict && errorString.ToLower().Contains("member already exists"))
                                   {
-                                     // Logger.WriteLine("Warning: Member '{1}' already exists in group {0}", id, itemKey.Email);
                                       return;
                                   }
                               }
@@ -199,7 +159,6 @@ namespace Lithnet.GoogleApps
 
                 foreach (string member in members)
                 {
-                    //Logger.WriteLine("Queuing request to delete member {0}", member);
                     requests.Add(poolService.Item.Members.Delete(id, member));
                 }
 
@@ -217,7 +176,6 @@ namespace Lithnet.GoogleApps
 
                               if (error == null)
                               {
-                                  //Logger.WriteLine("Member '{1}' deleted from group {0}", id, itemKey);
                                   return;
                               }
 
@@ -227,12 +185,11 @@ namespace Lithnet.GoogleApps
                               {
                                   if (message.StatusCode == System.Net.HttpStatusCode.NotFound && errorString.Contains("Resource Not Found: memberKey"))
                                   {
-                                      //Logger.WriteLine("Warning: request to delete non-existent member '{1}' from group {0}", id, itemKey);
                                       return;
                                   }
                               }
 
-                              GoogleApiException ex = new Google.GoogleApiException(poolService.Item.Name, errorString);
+                              GoogleApiException ex = new GoogleApiException(poolService.Item.Name, errorString);
                               ex.HttpStatusCode = message.StatusCode;
                               failedMembers.Add(itemKey);
                               failures.Add(ex);

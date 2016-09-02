@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Lithnet.GoogleApps.ManagedObjects;
+﻿using Lithnet.GoogleApps.ManagedObjects;
 using Google.Apis.Groupssettings.v1;
 using Google.Apis.Discovery;
 using Google.Apis.Services;
@@ -10,7 +6,7 @@ using Google.Apis.Util;
 
 namespace Lithnet.GoogleApps.Api
 {
-    public class GroupSettingsPatchRequest : GroupssettingsBaseServiceRequest<GroupSettings>
+    public sealed class GroupSettingsPatchRequest : GroupssettingsBaseServiceRequest<GroupSettings>
     {
         public GroupSettingsPatchRequest(IClientService service, GroupSettings body, string groupUniqueId)
             : base(service)
@@ -45,28 +41,10 @@ namespace Lithnet.GoogleApps.Api
         [RequestParameter("groupUniqueId", RequestParameterType.Path)]
         public string GroupUniqueId { get; private set; }
 
-        public override string HttpMethod
-        {
-            get
-            {
-                return "PATCH";
-            }
-        }
+        public override string HttpMethod => "PATCH";
 
-        public override string MethodName
-        {
-            get
-            {
-                return "patch";
-            }
-        }
+        public override string MethodName => "patch";
 
-        public override string RestPath
-        {
-            get
-            {
-                return "{groupUniqueId}";
-            }
-        }
+        public override string RestPath => "{groupUniqueId}";
     }
 }

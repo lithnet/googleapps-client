@@ -1,7 +1,5 @@
 ﻿using Google.Apis.Requests;
 using Newtonsoft.Json;
-using System;
-using System.Runtime.CompilerServices;
     
 namespace Lithnet.GoogleApps.ManagedObjects
 {
@@ -17,9 +15,9 @@ namespace Lithnet.GoogleApps.ManagedObjects
         }
 
         [JsonProperty("etag", NullValueHandling = NullValueHandling.Ignore)]
-        public virtual string ETag { get; set; }
+        public string ETag { get; set; }
 
         [JsonProperty("orgUnitPath")]
-        public virtual string OrgUnitPath { get; set; }
+        public string OrgUnitPath { get; set; }
     }
 }

@@ -6,7 +6,7 @@ using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps.Api
 {
-    public class DomainListRequest : DirectoryBaseServiceRequest<DomainList>
+    public sealed class DomainListRequest : DirectoryBaseServiceRequest<DomainList>
     {
         public DomainListRequest(IClientService service, string customer)
             : base(service)
@@ -32,19 +32,10 @@ namespace Lithnet.GoogleApps.Api
             base.RequestParameters.Add(parameter.Name, parameter);
         }
 
-        public override string HttpMethod
-        {
-            get { return "GET"; }
-        }
+        public override string HttpMethod => "GET";
 
-        public override string MethodName
-        {
-            get { return "list"; }
-        }
+        public override string MethodName => "list";
 
-        public override string RestPath
-        {
-            get { return "customer/{customer}/domains"; }
-        }
+        public override string RestPath => "customer/{customer}/domains";
     }
 }

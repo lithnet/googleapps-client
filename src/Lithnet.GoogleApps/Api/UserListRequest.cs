@@ -1,5 +1,4 @@
-﻿using System;
-using Google.Apis.Admin.Directory.directory_v1;
+﻿using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Discovery;
 using Google.Apis.Services;
 using Google.Apis.Util;
@@ -7,7 +6,7 @@ using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps.Api
 {
-    public class UserListRequest : DirectoryBaseServiceRequest<UserList>
+    public sealed class UserListRequest : DirectoryBaseServiceRequest<UserList>
     {
         public UserListRequest(IClientService service)
             : base(service)
@@ -138,113 +137,45 @@ namespace Lithnet.GoogleApps.Api
         }
 
         [RequestParameter("customer", RequestParameterType.Query)]
-        public virtual string Customer { get; set; }
+        public string Customer { get; set; }
 
         [RequestParameter("customFieldMask", RequestParameterType.Query)]
-        public virtual string CustomFieldMask { get; set; }
+        public string CustomFieldMask { get; set; }
 
         [RequestParameter("domain", RequestParameterType.Query)]
-        public virtual string Domain { get; set; }
+        public string Domain { get; set; }
 
         [RequestParameter("event", RequestParameterType.Query)]
-        public virtual EventEnum? Event { get; set; }
+        public EventEnum? Event { get; set; }
 
-        public override string HttpMethod
-        {
-            get
-            {
-                return "GET";
-            }
-        }
+        public override string HttpMethod => "GET";
 
         [RequestParameter("maxResults", RequestParameterType.Query)]
-        public virtual int? MaxResults { get; set; }
+        public int? MaxResults { get; set; }
 
-        public override string MethodName
-        {
-            get
-            {
-                return "list";
-            }
-        }
+        public override string MethodName => "list";
 
         [RequestParameter("orderBy", RequestParameterType.Query)]
-        public virtual OrderByEnum? OrderBy { get; set; }
+        public OrderByEnum? OrderBy { get; set; }
 
         [RequestParameter("pageToken", RequestParameterType.Query)]
-        public virtual string PageToken { get; set; }
+        public string PageToken { get; set; }
 
         [RequestParameter("projection", RequestParameterType.Query)]
-        public virtual ProjectionEnum? Projection { get; set; }
+        public ProjectionEnum? Projection { get; set; }
 
         [RequestParameter("query", RequestParameterType.Query)]
-        public virtual string Query { get; set; }
+        public string Query { get; set; }
 
-        public override string RestPath
-        {
-            get
-            {
-                return "users";
-            }
-        }
+        public override string RestPath => "users";
 
         [RequestParameter("showDeleted", RequestParameterType.Query)]
-        public virtual string ShowDeleted { get; set; }
+        public string ShowDeleted { get; set; }
 
         [RequestParameter("sortOrder", RequestParameterType.Query)]
-        public virtual SortOrderEnum? SortOrder { get; set; }
+        public SortOrderEnum? SortOrder { get; set; }
 
         [RequestParameter("viewType", RequestParameterType.Query)]
-        public virtual ViewTypeEnum? ViewType { get; set; }
-
-        public enum EventEnum
-        {
-            [StringValue("add")]
-            Add = 0,
-            [StringValue("delete")]
-            Delete = 1,
-            [StringValue("makeAdmin")]
-            MakeAdmin = 2,
-            [StringValue("undelete")]
-            Undelete = 3,
-            [StringValue("update")]
-            Update = 4
-        }
-
-        public enum OrderByEnum
-        {
-            [StringValue("email")]
-            Email = 0,
-            [StringValue("familyName")]
-            FamilyName = 1,
-            [StringValue("givenName")]
-            GivenName = 2
-        }
-
-        public enum ProjectionEnum
-        {
-            [StringValue("basic")]
-            Basic = 0,
-            [StringValue("custom")]
-            Custom = 1,
-            [StringValue("full")]
-            Full = 2
-        }
-
-        public enum SortOrderEnum
-        {
-            [StringValue("ASCENDING")]
-            ASCENDING = 0,
-            [StringValue("DESCENDING")]
-            DESCENDING = 1
-        }
-
-        public enum ViewTypeEnum
-        {
-            [StringValue("admin_view")]
-            AdminView = 0,
-            [StringValue("domain_public")]
-            DomainPublic = 1
-        }
+        public ViewTypeEnum? ViewType { get; set; }
     }
 }

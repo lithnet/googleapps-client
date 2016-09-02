@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {
@@ -12,14 +8,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
         public string Value { get; set; }
 
         [JsonIgnore]
-        protected override string[] StandardTypes
-        {
-            get
-            {
-
-                return new string[] { "account", "customer", "network", "organization" };
-            }
-        }
+        protected override string[] StandardTypes => new string[] { "account", "customer", "network", "organization" };
 
         public override bool IsEmpty()
         {
@@ -28,7 +17,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
         public override string ToString()
         {
-            return string.Format("{0}:{1}", this.Type, this.Value);
+            return $"{this.Type}:{this.Value}";
         }
     }
 }

@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Newtonsoft.Json;
 using System.Collections;
-using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps
 {
@@ -26,32 +22,16 @@ namespace Lithnet.GoogleApps
             if (typedValue.Count == 0)
             {
                 writer.WriteNull();
-                //writer.WritePropertyName("addresses");
-               // writer.WriteValue("[]");
             }
             else
             {
                 JsonSerializer x = JsonSerializer.Create();
                 x.Serialize(writer, value);
-
-                //serializer.Serialize(writer, value);
             }
         }
 
-        public override bool CanRead
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool CanRead => false;
 
-        public override bool CanWrite
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public override bool CanWrite => true;
     }
 }

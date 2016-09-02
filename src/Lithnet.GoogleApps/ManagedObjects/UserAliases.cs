@@ -1,8 +1,6 @@
 ﻿using Google.Apis.Requests;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace Lithnet.GoogleApps.ManagedObjects
 {

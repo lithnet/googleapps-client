@@ -15,17 +15,12 @@ namespace Lithnet.GoogleApps
 {
     public static class UserRequestFactory
     {
-        public static void StartImport(string customerID, BlockingCollection<object> importUsers)
+        public static IEnumerable<User> GetUsers(string customerID)
         {
-            UserRequestFactory.StartImport(customerID, null, importUsers);
+            return UserRequestFactory.GetUsers(customerID, null);
         }
 
-        public static void StartImport(string customerID, string fields, BlockingCollection<object> importUsers)
-        {
-            UserRequestFactory.GetUsers(customerID, fields, importUsers);
-        }
-
-        private static void GetUsers(string customerID, string fields, BlockingCollection<object> importUsers)
+        public static IEnumerable<User> GetUsers(string customerID, string fields)
         {
             using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
@@ -38,7 +33,7 @@ namespace Lithnet.GoogleApps
 
                 if (fields != null)
                 {
-                    request.Projection = UserListRequest.ProjectionEnum.Full;
+                    request.Projection = ProjectionEnum.Full;
                     request.Fields = fields;
                 }
 
@@ -57,7 +52,7 @@ namespace Lithnet.GoogleApps
 
                     foreach (User item in pageResults.UsersValue)
                     {
-                        importUsers.Add(item);
+                        yield return item;
                     }
 
                     token = pageResults.NextPageToken;

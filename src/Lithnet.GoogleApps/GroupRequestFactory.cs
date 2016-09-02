@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using Google.Apis.Admin.Directory.directory_v1.Data;
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Google.Apis.Admin.Directory.directory_v1;
 
 namespace Lithnet.GoogleApps
 {
-    using Google.Apis.Admin.Directory.directory_v1;
 
     public static class GroupRequestFactory
     {
@@ -24,96 +22,159 @@ namespace Lithnet.GoogleApps
         public static int MemberThreads { get; set; }
 
         public static int SettingsThreads { get; set; }
-
-        public static void ImportGroups(string customerID, bool getMembers, bool getSettings, BlockingCollection<object> items)
+        
+        public static IEnumerable<GoogleGroup> GetGroups(string customerID, bool getMembers, bool getSettings, string groupFields, string settingsFields)
         {
-            ImportGroups(customerID, getMembers, getSettings, null, null, items);
+            BlockingCollection<GoogleGroup> completedGroups = new BlockingCollection<GoogleGroup>();
+
+            Task t = new Task(() => GroupRequestFactory.PopulateGroups(customerID, groupFields, getSettings, getMembers, completedGroups));
+            t.Start();
+
+            foreach (GoogleGroup group in completedGroups.GetConsumingEnumerable())
+            {
+                yield return group;
+            }
         }
 
-        public static void ImportGroups(string customerID, bool getMembers, bool getSettings, string groupFields, string settingsFields, BlockingCollection<object> items)
+        private static void PopulateGroups(string customerID, string groupFields, bool getSettings, bool getMembers, BlockingCollection<GoogleGroup> completedGroups)
         {
-            Task membersTask = null;
-            Task settingsTask = null;
+            BlockingCollection<GoogleGroup> settingsQueue = new BlockingCollection<GoogleGroup>();
+            BlockingCollection<GoogleGroup> membersQueue = new BlockingCollection<GoogleGroup>();
+            BlockingCollection<GoogleGroup> incomingGroups = new BlockingCollection<GoogleGroup>();
 
-            if (getMembers)
-            {
-                membersTask = new Task(() => GroupMemberRequestFactory.ConsumeQueue(GroupRequestFactory.MemberThreads));
-            }
+            List<Task> tasks = new List<Task>();
 
             if (getSettings)
             {
-                settingsTask = new Task(() => GroupSettingsRequestFactory.ConsumeQueue(GroupRequestFactory.SettingsThreads));
-                settingsTask.Start();
-            }
-
-            List<GoogleGroup> membersGroup = new List<GoogleGroup>();
-
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
-            {
-                string token = null;
-                GroupsResource.ListRequest request = connection.Item.Groups.List();
-                request.Customer = customerID;
-                request.MaxResults = 200;
-                request.Fields = groupFields;
-                request.PrettyPrint = false;
-                Groups pageResults;
-
-                do
-                {
-                    request.PageToken = token;
-
-                    pageResults = request.ExecuteWithBackoff();
-
-                    if (pageResults.GroupsValue == null)
-                    {
-                        break;
-                    }
-
-                    foreach (Group myGroup in pageResults.GroupsValue)
-                    {
-                        GoogleGroup group = new GoogleGroup(myGroup);
-                        GroupSettingsRequestFactory.AddJob(group);
-                        membersGroup.Add(group);
-                    }
-                   
-                    token = pageResults.NextPageToken;
-
-                } while (token != null);
+                Task t = new Task(() => GroupRequestFactory.ConsumeGroupSettingsQueue(GroupRequestFactory.SettingsThreads, settingsQueue, completedGroups));
+                t.Start();
+                tasks.Add(t);
             }
 
             if (getMembers)
             {
-                foreach (GoogleGroup mygroup in membersGroup.OrderByDescending(t => t.Group.DirectMembersCount))
+                Task t = new Task(() => GroupRequestFactory.ConsumeGroupMembershipQueue(GroupRequestFactory.MemberThreads, membersQueue, completedGroups));
+                t.Start();
+                tasks.Add(t);
+            }
+
+            Task t1 = new Task(() =>
+            {
+                using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
                 {
-                    GroupMemberRequestFactory.AddJob(mygroup);
+                    string token = null;
+                    GroupsResource.ListRequest request = connection.Item.Groups.List();
+                    request.Customer = customerID;
+                    request.MaxResults = 200;
+                    request.Fields = groupFields;
+                    request.PrettyPrint = false;
+
+                    do
+                    {
+                        request.PageToken = token;
+
+                        Groups pageResults = request.ExecuteWithBackoff();
+
+                        if (pageResults.GroupsValue == null)
+                        {
+                            break;
+                        }
+
+                        foreach (Group group in pageResults.GroupsValue)
+                        {
+                            GoogleGroup g = new GoogleGroup(group);
+                            g.RequiresMembers = getMembers;
+                            g.RequiresSettings = getSettings;
+
+                            incomingGroups.Add(g);
+
+                            if (getSettings)
+                            {
+                                settingsQueue.Add(g);
+                            }
+
+                            if (getMembers)
+                            {
+                                membersQueue.Add(g);
+                            }
+
+                            if (!getSettings && !getMembers)
+                            {
+                                completedGroups.Add(g);
+                            }
+                        }
+
+                        token = pageResults.NextPageToken;
+
+                    } while (token != null);
+
+                    incomingGroups.CompleteAdding();
+                    settingsQueue.CompleteAdding();
+                    membersQueue.CompleteAdding();
                 }
+            });
 
-                membersTask.Start();
-                GroupMemberRequestFactory.CompleteAdding();
-            }
+            t1.Start();
+            tasks.Add(t1);
+            Task.WhenAll(tasks).ContinueWith((a) => completedGroups.CompleteAdding());
+        }
 
-            if (getSettings)
-            {
-                GroupSettingsRequestFactory.CompleteAdding();
-            }
+        private static void ConsumeGroupMembershipQueue(int threads, BlockingCollection<GoogleGroup> groups, BlockingCollection<GoogleGroup> completedGroups)
+        {
+            ParallelOptions op = new ParallelOptions { MaxDegreeOfParallelism = threads };
 
-            if (getSettings && getMembers)
+            Parallel.ForEach(groups.GetConsumingEnumerable(), op, (group) =>
             {
-                Task.WaitAll(membersTask, settingsTask);
-            }
-            else if (getSettings)
-            {
-                settingsTask.Wait();
-            }
-            else if (getMembers)
-            {
-                membersTask.Wait();
-            }
+                try
+                {
+                    lock (group)
+                    {
+                        group.GetMembership();
 
-            foreach (GoogleGroup group in membersGroup)
+                        if (group.IsComplete)
+                        {
+                            completedGroups.Add(group);
+                        }
+                    }
+                }
+                catch (AggregateException ex)
+                {
+                    group.Errors.Add(ex.InnerException);
+                }
+                catch (Exception ex)
+                {
+                    group.Errors.Add(ex);
+                }
+            });
+        }
+
+        private static void ConsumeGroupSettingsQueue(int threads, BlockingCollection<GoogleGroup> groups, BlockingCollection<GoogleGroup> completedGroups)
+        {
+            ParallelOptions op = new ParallelOptions { MaxDegreeOfParallelism = threads };
+
+            Parallel.ForEach(groups.GetConsumingEnumerable(), op, (group) =>
             {
-                items.Add(group);
-            }
+                try
+                {
+                    lock (group)
+                    {
+                        group.GetSettings();
+
+                        if (group.IsComplete)
+                        {
+                            completedGroups.Add(group);
+                        }
+                    }
+                }
+                catch (AggregateException ex)
+                {
+                    group.Errors.Add(ex.InnerException);
+                }
+                catch (Exception ex)
+                {
+                    group.Errors.Add(ex);
+                }
+            });
         }
 
         public static string Delete(string groupKey)
@@ -140,7 +201,7 @@ namespace Lithnet.GoogleApps
             {
 
                 GroupsResource.UpdateRequest request = connection.Item.Groups.Update(item, groupKey);
-               return request.ExecuteWithBackoff();
+                return request.ExecuteWithBackoff();
             }
         }
 

@@ -1,5 +1,4 @@
-﻿using System;
-using Google.Apis.Admin.Directory.directory_v1;
+﻿using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Discovery;
 using Google.Apis.Services;
 using Google.Apis.Util;
@@ -7,7 +6,7 @@ using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps.Api
 {
-    public class UserPatchRequest : DirectoryBaseServiceRequest<User>
+    public sealed class UserPatchRequest : DirectoryBaseServiceRequest<User>
     {
         public UserPatchRequest(IClientService service, User body, string userKey)
             : base(service)
@@ -38,32 +37,13 @@ namespace Lithnet.GoogleApps.Api
 
         private User Body { get; set; }
 
-        public override string HttpMethod
-        {
-            get
-            {
-                return "PATCH";
-            }
-        }
+        public override string HttpMethod => "PATCH";
 
-        public override string MethodName
-        {
-            get
-            {
-                return "patch";
-            }
-        }
+        public override string MethodName => "patch";
 
-        public override string RestPath
-        {
-            get
-            {
-                return "users/{userKey}";
-            }
-        }
+        public override string RestPath => "users/{userKey}";
 
         [RequestParameter("userKey", RequestParameterType.Path)]
         public string UserKey { get; private set; }
     }
-      
 }

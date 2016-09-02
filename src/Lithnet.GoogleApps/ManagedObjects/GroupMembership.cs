@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using G = Google.Apis.Admin.Directory.directory_v1.Data;
 
 namespace Lithnet.GoogleApps.ManagedObjects
@@ -10,13 +9,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
     {
         private static List<string> internalDomains;
 
-        private static List<string> InternalDomains
-        {
-            get
-            {
-                return GroupMembership.internalDomains;
-            }
-        }
+        private static List<string> InternalDomains => GroupMembership.internalDomains;
 
         public HashSet<string> Members { get; set; }
 
@@ -52,8 +45,6 @@ namespace Lithnet.GoogleApps.ManagedObjects
             this.Owners = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
             this.ExternalOwners = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
         }
-
-
 
         public HashSet<string> GetAllMembers()
         {
@@ -98,25 +89,34 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
             foreach (string address in this.Members.Union(this.ExternalMembers))
             {
-                G.Member member = new G.Member();
-                member.Role = "MEMBER";
-                member.Email = address;
+                G.Member member = new G.Member
+                {
+                    Role = "MEMBER",
+                    Email = address
+                };
+
                 members.Add(member);
             }
 
             foreach (string address in this.Managers.Union(this.ExternalManagers))
             {
-                G.Member member = new G.Member();
-                member.Role = "MANAGER";
-                member.Email = address;
+                G.Member member = new G.Member
+                {
+                    Role = "MANAGER",
+                    Email = address
+                };
+
                 members.Add(member);
             }
 
             foreach (string address in this.Owners.Union(this.ExternalOwners))
             {
-                G.Member member = new G.Member();
-                member.Role = "OWNER";
-                member.Email = address;
+                G.Member member = new G.Member
+                {
+                    Role = "OWNER",
+                    Email = address
+                };
+
                 members.Add(member);
             }
 
@@ -127,19 +127,15 @@ namespace Lithnet.GoogleApps.ManagedObjects
         {
             GroupMembership.internalDomains = new List<string>();
 
-            //Logging.Logger.WriteLine("Querying for internal domains");
-
-            foreach (Domain domain in DomainsRequestFactory.List("my_customer").Domains)
+            foreach (Domain domain in DomainsRequestFactory.List(customerID).Domains)
             {
                 GroupMembership.internalDomains.Add(domain.DomainName);
-                //Logging.Logger.WriteLine("Got internal domain {0}", domain.DomainName);
 
                 if (domain.DomainAliases != null)
                 {
                     foreach (DomainAlias alias in domain.DomainAliases)
                     {
                         GroupMembership.internalDomains.Add(alias.DomainAliasName);
-                        //Logging.Logger.WriteLine("Got internal domain alias {0}", domain.DomainName);
                     }
                 }
             }
@@ -213,7 +209,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
             if (split.Length != 2)
             {
-                throw new ArgumentException("The specified address was not a valid email address: " + address, "address");
+                throw new ArgumentException("The specified address was not a valid email address: " + address, nameof(address));
             }
 
             if (GroupMembership.InternalDomains == null || GroupMembership.InternalDomains.Count == 0)
@@ -228,29 +224,6 @@ namespace Lithnet.GoogleApps.ManagedObjects
             else
             {
                 return false;
-            }
-        }
-
-        private void SplitExternalMembers(List<string> members, out List<string> internalMembers, out List<string> externalMembers)
-        {
-            internalMembers = new List<string>();
-            externalMembers = new List<string>();
-
-            if (members == null)
-            {
-                return;
-            }
-
-            foreach (string member in members)
-            {
-                if (this.IsAddressInternal(member))
-                {
-                    internalMembers.Add(member);
-                }
-                else
-                {
-                    externalMembers.Add(member);
-                }
             }
         }
     }
