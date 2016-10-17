@@ -1,4 +1,5 @@
-﻿using Google.Apis.Admin.Directory.directory_v1;
+﻿using System.Threading;
+using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Groupssettings.v1;
 using Google.Apis.Services;
 using Google.Apis.Auth.OAuth2;
@@ -67,14 +68,17 @@ namespace Lithnet.GoogleApps
         {
             ConnectionPools.directoryServicePool = new BaseClientServicePool<DirectoryService>(size, () =>
                 {
-                    return new DirectoryService(new BaseClientService.Initializer()
+                    DirectoryService x = new DirectoryService(new BaseClientService.Initializer()
                     {
                         HttpClientInitializer = credentials,
                         ApplicationName = "LithnetGoogleAppsLibrary",
                         GZipEnabled = !ConnectionPools.DisableGzip,
                         Serializer = new GoogleJsonSerializer(),
-                        DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None
+                        DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
                     });
+
+                    x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                    return x;
                 });
         }
 
@@ -82,7 +86,7 @@ namespace Lithnet.GoogleApps
         {
             ConnectionPools.groupSettingServicePool = new BaseClientServicePool<GroupssettingsService>(size, () =>
                 {
-                    return new GroupssettingsService(new BaseClientService.Initializer()
+                    GroupssettingsService x = new GroupssettingsService(new BaseClientService.Initializer()
                     {
                         HttpClientInitializer = credentials,
                         ApplicationName = "LithnetGoogleAppsLibrary",
@@ -91,6 +95,9 @@ namespace Lithnet.GoogleApps
                         DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None
 
                     });
+
+                    x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                    return x;
                 });
         }
     }
