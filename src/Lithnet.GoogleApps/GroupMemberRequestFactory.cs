@@ -15,7 +15,7 @@ namespace Lithnet.GoogleApps
         // Batch size can technically be up to 1000, but a google API error is returned with requests that seem to take more than 5.5 minutes
         // 500 works, but can timeout on the client side, unless the default HttpClient timeout is raised from the default of 100 seconds
         // @ 250 we seem to get comparible updated objects/sec as at batch sizes of 500 and 750.
-        private const int BatchSize = 250;
+        public static int BatchSize { get; set; } = 10;
 
         public static GroupMembership GetMembership(string groupKey)
         {
@@ -84,18 +84,36 @@ namespace Lithnet.GoogleApps
             }
         }
 
+        public static void ChangeMemberRole(string groupID, Member item)
+        {
+            using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                MembersResource.PatchRequest request = poolService.Item.Members.Patch(item, groupID, item.Email);
+                request.ExecuteWithBackoff();
+            }
+        }
+
         public static void RemoveMember(string groupID, string memberID)
         {
             using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 MembersResource.DeleteRequest request = poolService.Item.Members.Delete(groupID, memberID);
-
                 request.ExecuteWithBackoff();
             }
         }
 
         public static void AddMembers(string id, IList<Member> members, bool throwOnExistingMember)
         {
+            if (GroupMemberRequestFactory.BatchSize <= 1)
+            {
+                foreach (Member member in members)
+                {
+                    GroupMemberRequestFactory.AddMember(id, member);
+                }
+
+                return;
+            }
+
             using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 List<MembersResource.InsertRequest> requests = new List<MembersResource.InsertRequest>();
@@ -167,6 +185,16 @@ namespace Lithnet.GoogleApps
 
         public static void RemoveMembers(string id, IList<string> members, bool throwOnMissingMember)
         {
+            if (GroupMemberRequestFactory.BatchSize <= 1)
+            {
+                foreach (string member in members)
+                {
+                    GroupMemberRequestFactory.RemoveMember(id, member);
+                }
+
+                return;
+            }
+
             using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 List<MembersResource.DeleteRequest> requests = new List<MembersResource.DeleteRequest>();
@@ -209,6 +237,78 @@ namespace Lithnet.GoogleApps
                                 GoogleApiException ex = new GoogleApiException(poolSerivceName, errorString);
                                 ex.HttpStatusCode = message.StatusCode;
                                 failedMembers.Add(itemKey);
+                                failures.Add(ex);
+                            });
+                    }
+
+                    batchRequest.ExecuteAsync().Wait();
+                }
+
+                if (failures.Count == 1)
+                {
+                    throw failures[0];
+                }
+                else if (failures.Count > 1)
+                {
+                    throw new AggregateGroupUpdateException(id, failedMembers, failures);
+                }
+            }
+        }
+
+        public static void ChangeMemberRoles(string id, IList<Member> members)
+        {
+            if (GroupMemberRequestFactory.BatchSize <= 1)
+            {
+                foreach (Member member in members)
+                {
+                    GroupMemberRequestFactory.ChangeMemberRole(id, member);
+                }
+
+                return;
+            }
+
+            using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                List<MembersResource.PatchRequest> requests = new List<MembersResource.PatchRequest>();
+                string poolSerivceName = poolService.Item.Name;
+
+                foreach (Member member in members)
+                {
+                    requests.Add(poolService.Item.Members.Patch(member, id, member.Email));
+                }
+
+                List<string> failedMembers = new List<string>();
+                List<Exception> failures = new List<Exception>();
+
+                foreach (IEnumerable<MembersResource.PatchRequest> batch in requests.Batch(GroupMemberRequestFactory.BatchSize))
+                {
+                    BatchRequest batchRequest = new BatchRequest(poolService.Item);
+
+                    foreach (MembersResource.PatchRequest request in batch)
+                    {
+                        batchRequest.Queue<string>(request,
+                            (content, error, i, message) =>
+                            {
+                                Member itemKey = members[i];
+
+                                if (error == null)
+                                {
+                                    return;
+                                }
+
+                                string errorString = string.Format("{0}\nFailed member role change: {1}\nGroup: {2}", error.ToString(), itemKey, id);
+
+                                //if (!throwOnMissingMember)
+                                //{
+                                //    if (message.StatusCode == System.Net.HttpStatusCode.NotFound && errorString.Contains("Resource Not Found: memberKey"))
+                                //    {
+                                //        return;
+                                //    }
+                                //}
+
+                                GoogleApiException ex = new GoogleApiException(poolSerivceName, errorString);
+                                ex.HttpStatusCode = message.StatusCode;
+                                failedMembers.Add(itemKey.Email);
                                 failures.Add(ex);
                             });
                     }

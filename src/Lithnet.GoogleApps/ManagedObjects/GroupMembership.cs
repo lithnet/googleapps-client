@@ -226,5 +226,56 @@ namespace Lithnet.GoogleApps.ManagedObjects
                 return false;
             }
         }
+
+        public void MergeMembership(GroupMembership g)
+        {
+            foreach (string item in g.Members)
+            {
+                this.Members.Add(item);
+            }
+
+            foreach (string item in g.Managers)
+            {
+                this.Managers.Add(item);
+            }
+
+            foreach (string item in g.Owners)
+            {
+                this.Owners.Add(item);
+            }
+
+            foreach (string item in g.ExternalMembers)
+            {
+                this.ExternalMembers.Add(item);
+            }
+
+            foreach (string item in g.ExternalManagers)
+            {
+                this.ExternalManagers.Add(item);
+            }
+
+            foreach (string item in g.ExternalOwners)
+            {
+                this.ExternalOwners.Add(item);
+            }
+        }
+
+        public void RemoveMember(string member)
+        {
+            this.Members.Remove(member);
+            this.Managers.Remove(member);
+            this.Owners.Remove(member);
+            this.ExternalMembers.Remove(member);
+            this.ExternalManagers.Remove(member);
+            this.ExternalOwners.Remove(member);
+        }
+
+        public void RemoveMembers(IEnumerable<string> members)
+        {
+            foreach (string member in members)
+            {
+                this.RemoveMember(member);
+            }
+        }
     }
 }
