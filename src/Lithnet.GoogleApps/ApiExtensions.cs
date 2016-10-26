@@ -6,21 +6,39 @@ using System.Threading;
 using Google.Apis.Requests;
 using System.Security;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace Lithnet.GoogleApps
 {
     public static class ApiExtensions
     {
-        public static int BackoffRetries = 0;
+        private static int backoffRetryCount = 0;
 
         private static Random randomNumberGenerator = new Random();
+      
+        public static int BackoffRetryCount
+        {
+            get
+            {
+                return ApiExtensions.backoffRetryCount;
+            }
+            set
+            {
+                ApiExtensions.backoffRetryCount = value;
+            }
+        }
 
         public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request)
         {
             return request.ExecuteWithBackoff(8);
         }
 
-        public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request, int retryAttemps)
+        public static void ExecuteWithBackoff(this BatchRequest request, string serviceName)
+        {
+            request.ExecuteWithBackoff(serviceName, 8);
+        }
+
+        public static void ExecuteWithBackoff(this BatchRequest request, string serviceName, int retryAttempts)
         {
             int attemptCount = 0;
 
@@ -29,24 +47,70 @@ namespace Lithnet.GoogleApps
                 try
                 {
                     attemptCount++;
+
+                    RateLimiter.GetOrCreateBucket(serviceName).Consume(request.Count);
+                    
+                    request.ExecuteAsync().Wait();
+                    break;
+                }
+                catch (Google.GoogleApiException ex)
+                {
+                    if (attemptCount <= retryAttempts)
+                    {
+                        if (ex.HttpStatusCode == HttpStatusCode.Forbidden && ex.Message.Contains("quotaExceeded"))
+                        {
+                            ApiExtensions.SleepThread(attemptCount);
+                        }
+                        else if (ex.HttpStatusCode == HttpStatusCode.InternalServerError)
+                        {
+                            ApiExtensions.SleepThread(attemptCount);
+                        }
+                        else if (ex.HttpStatusCode == HttpStatusCode.ServiceUnavailable)
+                        {
+                            ApiExtensions.SleepThread(attemptCount);
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request, int retryAttempts)
+        {
+            int attemptCount = 0;
+
+            while (true)
+            {
+                try
+                {
+                    attemptCount++;
+
+                    RateLimiter.GetOrCreateBucket(request.Service.Name).Consume();
+
                     return request.Execute();
                 }
                 catch (Google.GoogleApiException ex)
                 {
-                    Interlocked.Increment(ref BackoffRetries);
-                    if (attemptCount <= retryAttemps)
+                    if (attemptCount <= retryAttempts)
                     {
                         if (ex.HttpStatusCode == HttpStatusCode.Forbidden && ex.Message.Contains("quotaExceeded"))
                         {
-                            SleepThread(attemptCount);
+                            ApiExtensions.SleepThread(attemptCount);
                         }
                         else if (ex.HttpStatusCode == HttpStatusCode.InternalServerError)
                         {
-                            SleepThread(attemptCount);
+                            ApiExtensions.SleepThread(attemptCount);
                         }
                         else if (ex.HttpStatusCode == HttpStatusCode.ServiceUnavailable)
                         {
-                            SleepThread(attemptCount);
+                            ApiExtensions.SleepThread(attemptCount);
                         }
                         else
                         {
@@ -63,7 +127,10 @@ namespace Lithnet.GoogleApps
 
         private static void SleepThread(int attemptCount)
         {
-            Thread.Sleep((attemptCount * 1000) + randomNumberGenerator.Next(1000));
+            Interlocked.Increment(ref ApiExtensions.backoffRetryCount);
+            int interval = (attemptCount * 1000) + randomNumberGenerator.Next(1000);
+            Trace.WriteLine($"Backing off request attempt {attemptCount} for {interval} milliseconds");
+            Thread.Sleep(interval);
         }
 
         public static bool IsNullOrNullPlaceholder(this string s)
@@ -79,16 +146,14 @@ namespace Lithnet.GoogleApps
             }
             catch (Google.GoogleApiException ex)
             {
-                if (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
                 {
                     //Newly created object was not ready. Sleeping 1 second
-                    System.Threading.Thread.Sleep(1000);
+                    Thread.Sleep(1000);
                     return t.Invoke();
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
         }
 
@@ -100,25 +165,26 @@ namespace Lithnet.GoogleApps
             }
             catch (Google.GoogleApiException ex)
             {
-                if (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
                 {
                     //Newly created object was not ready. Sleeping 1 second
-                    System.Threading.Thread.Sleep(1000);
+                    Thread.Sleep(1000);
                     t.Invoke();
                 }
-                else
-                {
-                    throw;
-                }
+
+                throw;
             }
         }
 
         public static string ConvertToUnsecureString(this SecureString securePassword)
         {
             if (securePassword == null)
+            {
                 throw new ArgumentNullException(nameof(securePassword));
+            }
 
             IntPtr unmanagedString = IntPtr.Zero;
+
             try
             {
                 unmanagedString = Marshal.SecureStringToGlobalAllocUnicode(securePassword);
@@ -145,7 +211,10 @@ namespace Lithnet.GoogleApps
                 }
             }
 
-            if (batch.Any()) yield return batch;
+            if (batch.Any())
+            {
+                yield return batch;
+            }
         }
     }
 }

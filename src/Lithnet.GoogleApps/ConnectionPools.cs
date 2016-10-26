@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Groupssettings.v1;
 using Google.Apis.Services;
@@ -28,11 +29,39 @@ namespace Lithnet.GoogleApps
 
         public static Pool<ContactsService> ContactsServicePool => ConnectionPools.contactsServicePool;
 
+        public static void SetRateLimitDirectoryService(int requestsPerInterval, TimeSpan interval)
+        {
+            DirectoryService service = new DirectoryService();
+            RateLimiter.SetRateLimit(service.Name, requestsPerInterval, interval);
+        }
+
+        public static void SetRateLimitGroupSettingsService(int requestsPerInterval, TimeSpan interval)
+        {
+            GroupssettingsService service = new GroupssettingsService();
+            RateLimiter.SetRateLimit(service.Name, requestsPerInterval, interval);
+        }
+
+        public static void SetRateLimitEmailSettingsService(int requestsPerInterval, TimeSpan interval)
+        {
+            RateLimiter.SetRateLimit(typeof(EmailSettingsService).Name, requestsPerInterval, interval);
+        }
+
+        public static void SetRateLimitContactsService(int requestsPerInterval, TimeSpan interval)
+        {
+            RateLimiter.SetRateLimit(typeof(ContactsService).Name, requestsPerInterval, interval);
+        }
+
+        public static void SetConcurrentOperationLimitGroupMember(int maxConcurrentOperations)
+        {
+            RateLimiter.SetConcurrentLimit(GroupMemberRequestFactory.ServiceName, maxConcurrentOperations);
+        }
 
         public static void InitializePools(ServiceAccountCredential credentials, int directoryServicePoolSize, int groupSettingServicePoolSize, int userSettingsPoolSize, int contactsPoolSize)
         {
             ConnectionPools.PopulateDirectoryServicePool(credentials, directoryServicePoolSize);
             ConnectionPools.PopulateGroupSettingServicePool(credentials, groupSettingServicePoolSize);
+            GroupRequestFactory.SettingsThreads = groupSettingServicePoolSize;
+            
             ConnectionPools.PopulateUserSettingsServicePool(credentials, userSettingsPoolSize);
             ConnectionPools.PopulateContactsServicePool(credentials, contactsPoolSize);
         }
@@ -80,6 +109,7 @@ namespace Lithnet.GoogleApps
                     x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
                     return x;
                 });
+
         }
 
         private static void PopulateGroupSettingServicePool(ServiceAccountCredential credentials, int size)

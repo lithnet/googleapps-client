@@ -6,8 +6,16 @@ namespace Lithnet.GoogleApps
 {
     public static class ContactRequestFactory
     {
+        private static string serviceName;
+
+        static ContactRequestFactory()
+        {
+            ContactRequestFactory.serviceName = typeof(ContactsService).Name;
+        }
+
         public static IEnumerable<ContactEntry> GetContacts(string domain)
         {
+
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
                 string uri = ContactsQuery.CreateContactsUri(domain);
@@ -17,9 +25,9 @@ namespace Lithnet.GoogleApps
                     ContactsQuery request = new ContactsQuery(uri)
                     {
                         NumberToRetrieve = 1000
-
                     };
 
+                    RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
                     ContactsFeed x = connection.Item.Query(request);
 
                     foreach (ContactEntry entry in x.Entries.OfType<ContactEntry>())
@@ -38,6 +46,7 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
+                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
                 return (ContactEntry)connection.Item.Get(id);
             }
         }
@@ -46,7 +55,9 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
+                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
                 ContactEntry e = (ContactEntry)(connection.Item.Get(id));
+                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
                 connection.Item.Delete(e);
             }
         }
@@ -55,6 +66,7 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
+                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
                 connection.Item.Delete(c.EditUri.ToString());
             }
         }
@@ -63,6 +75,7 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
+                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
                 return connection.Item.Update(c);
             }
         }
@@ -71,6 +84,7 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
             {
+                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
                 return connection.Item.Insert($"https://www.google.com/m8/feeds/contacts/{domain}/full", c);
             }
         }

@@ -104,8 +104,10 @@
     <Compile Include="ManagedObjects\ExternalID.cs" />
     <Compile Include="ManagedObjects\Phone.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RateLimiter.cs" />
     <Compile Include="SchemaRequestFactory.cs" />
     <Compile Include="DomainsRequestFactory.cs" />
+    <Compile Include="TokenBucket.cs" />
     <Compile Include="UserRequestFactory.cs" />
     <Compile Include="ContactRequestFactory.cs" />
     <Compile Include="UserSettingsRequestFactory.cs" />

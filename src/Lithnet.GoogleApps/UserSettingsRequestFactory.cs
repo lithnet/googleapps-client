@@ -8,6 +8,13 @@ namespace Lithnet.GoogleApps
 {
     public static class UserSettingsRequestFactory
     {
+        private static string serviceName;
+
+        static UserSettingsRequestFactory()
+        {
+            UserSettingsRequestFactory.serviceName = typeof(EmailSettingsService).Name;
+        }
+
         public static IEnumerable<string> GetDelegates(string mail)
         {
             if (mail.IndexOf("@", StringComparison.Ordinal) < 0)
@@ -16,6 +23,8 @@ namespace Lithnet.GoogleApps
             }
 
             string[] mailParts = mail.Split('@');
+
+            RateLimiter.GetOrCreateBucket(UserSettingsRequestFactory.serviceName).Consume();
 
             using (PoolItem<EmailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take())
             {
@@ -46,8 +55,8 @@ namespace Lithnet.GoogleApps
 
             using (PoolItem<EmailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take())
             {
+                RateLimiter.GetOrCreateBucket(UserSettingsRequestFactory.serviceName).Consume();
                 connection.Item.SetDomain(mailParts[1]);
-
                 connection.Item.DeleteDelegate(mailParts[0], @delegate);
             }
         }
@@ -67,6 +76,7 @@ namespace Lithnet.GoogleApps
 
                 foreach (string @delegate in UserSettingsRequestFactory.GetDelegates(mail))
                 {
+                    RateLimiter.GetOrCreateBucket(UserSettingsRequestFactory.serviceName).Consume();
                     connection.Item.DeleteDelegate(mailParts[0], @delegate);
                 }
             }
@@ -83,8 +93,8 @@ namespace Lithnet.GoogleApps
 
             using (PoolItem<EmailSettingsService> connection = ConnectionPools.UserSettingsServicePool.Take())
             {
+                RateLimiter.GetOrCreateBucket(UserSettingsRequestFactory.serviceName).Consume();
                 connection.Item.SetDomain(mailParts[1]);
-
                 connection.Item.CreateDelegate(mailParts[0], @delegate);
             }
         }
@@ -104,6 +114,7 @@ namespace Lithnet.GoogleApps
 
                 foreach (string @delegate in delegates)
                 {
+                    RateLimiter.GetOrCreateBucket(UserSettingsRequestFactory.serviceName).Consume();
                     connection.Item.CreateDelegate(mailParts[0], @delegate);
                 }
             }

@@ -38,7 +38,7 @@ namespace Lithnet.GoogleApps
                 }
 
                 request.PrettyPrint = false;
-
+                
                 do
                 {
                     request.PageToken = token;
