@@ -62,8 +62,18 @@ namespace Lithnet.GoogleApps
         {
             lock (this)
             {
-                this.Settings = GroupSettingsRequestFactory.Get(this.Group.Email);
-                this.LoadedSettings = true;
+                try
+                {
+                    this.Settings = GroupSettingsRequestFactory.Get(this.Group.Email);
+                }
+                catch (Exception ex)
+                {
+                    this.Errors.Add(ex);
+                }
+                finally
+                {
+                    this.LoadedSettings = true;
+                }
             }
         }
 
@@ -71,8 +81,18 @@ namespace Lithnet.GoogleApps
         {
             lock (this)
             {
-                this.Membership = GroupMemberRequestFactory.GetMembership(this.Group.Email);
-                this.LoadedMembers = true;
+                try
+                {
+                    this.Membership = GroupMemberRequestFactory.GetMembership(this.Group.Email);
+                }
+                catch (Exception ex)
+                {
+                    this.Errors.Add(ex);
+                }
+                finally
+                {
+                    this.LoadedMembers = true;
+                }
             }
         }
 

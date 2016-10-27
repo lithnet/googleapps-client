@@ -4,9 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Google.Apis.Admin.Directory.directory_v1.Data;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Google.Apis.Admin.Directory.directory_v1;
+using Group = Google.Apis.Admin.Directory.directory_v1.Data.Group;
 
 namespace Lithnet.GoogleApps
 {
@@ -23,20 +26,21 @@ namespace Lithnet.GoogleApps
 
         public static int SettingsThreads { get; set; }
         
-        public static IEnumerable<GoogleGroup> GetGroups(string customerID, bool getMembers, bool getSettings, string groupFields, string settingsFields)
+        public static IEnumerable<GoogleGroup> GetGroups(string customerID, bool getMembers, bool getSettings, string groupFields, string settingsFields, bool excludeUserCreated = false, Regex regexFilter = null)
         {
             BlockingCollection<GoogleGroup> completedGroups = new BlockingCollection<GoogleGroup>();
 
-            Task t = new Task(() => GroupRequestFactory.PopulateGroups(customerID, groupFields, getSettings, getMembers, completedGroups));
+            Task t = new Task(() => GroupRequestFactory.PopulateGroups(customerID, groupFields, getSettings, getMembers, completedGroups, excludeUserCreated, regexFilter));
             t.Start();
 
             foreach (GoogleGroup group in completedGroups.GetConsumingEnumerable())
             {
+                Debug.WriteLine($"Group enumeration completed: {group.Group.Email}");
                 yield return group;
             }
         }
 
-        private static void PopulateGroups(string customerID, string groupFields, bool getSettings, bool getMembers, BlockingCollection<GoogleGroup> completedGroups)
+        private static void PopulateGroups(string customerID, string groupFields, bool getSettings, bool getMembers, BlockingCollection<GoogleGroup> completedGroups, bool excludeUserCreated, Regex regexFilter)
         {
             BlockingCollection<GoogleGroup> settingsQueue = new BlockingCollection<GoogleGroup>();
             BlockingCollection<GoogleGroup> membersQueue = new BlockingCollection<GoogleGroup>();
@@ -82,6 +86,24 @@ namespace Lithnet.GoogleApps
 
                         foreach (Group group in pageResults.GroupsValue)
                         {
+                            if (regexFilter != null)
+                            {
+                                if (!regexFilter.IsMatch(group.Email))
+                                {
+                                    Trace.WriteLine($"Ignoring group that doesn't match regex filter {group.Email}");
+                                    continue;
+                                }
+                            }
+
+                            if (excludeUserCreated)
+                            {
+                                if (!group.AdminCreated.HasValue || !group.AdminCreated.Value)
+                                {
+                                    Trace.WriteLine($"Ignoring user created group {group.Email}");
+                                    continue;
+                                }
+                            }
+
                             GoogleGroup g = new GoogleGroup(group);
                             g.RequiresMembers = getMembers;
                             g.RequiresSettings = getSettings;
@@ -130,7 +152,8 @@ namespace Lithnet.GoogleApps
                     lock (group)
                     {
                         group.GetMembership();
-
+                        Debug.WriteLine($"Group membership completed: {group.Group.Email}");
+                        
                         if (group.IsComplete)
                         {
                             completedGroups.Add(group);
@@ -159,6 +182,7 @@ namespace Lithnet.GoogleApps
                     lock (group)
                     {
                         group.GetSettings();
+                        Debug.WriteLine($"Group settings completed: {group.Group.Email}");
 
                         if (group.IsComplete)
                         {

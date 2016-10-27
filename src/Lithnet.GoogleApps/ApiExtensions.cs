@@ -15,7 +15,7 @@ namespace Lithnet.GoogleApps
         private static int backoffRetryCount = 0;
 
         private static Random randomNumberGenerator = new Random();
-      
+
         public static int BackoffRetryCount
         {
             get
@@ -49,7 +49,7 @@ namespace Lithnet.GoogleApps
                     attemptCount++;
 
                     RateLimiter.GetOrCreateBucket(serviceName).Consume(request.Count);
-                    
+
                     request.ExecuteAsync().Wait();
                     break;
                 }
@@ -57,30 +57,30 @@ namespace Lithnet.GoogleApps
                 {
                     if (attemptCount <= retryAttempts)
                     {
-                        if (ex.HttpStatusCode == HttpStatusCode.Forbidden && ex.Message.Contains("quotaExceeded"))
+                        if (ex.HttpStatusCode == HttpStatusCode.Forbidden &&
+                            (ex.Message.IndexOf("quotaExceeded", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                             ex.Message.IndexOf("userRateLimitExceeded", StringComparison.OrdinalIgnoreCase) >= 0))
                         {
                             ApiExtensions.SleepThread(attemptCount);
+                            continue;
                         }
                         else if (ex.HttpStatusCode == HttpStatusCode.InternalServerError)
                         {
                             ApiExtensions.SleepThread(attemptCount);
+                            continue;
                         }
                         else if (ex.HttpStatusCode == HttpStatusCode.ServiceUnavailable)
                         {
                             ApiExtensions.SleepThread(attemptCount);
-                        }
-                        else
-                        {
-                            throw;
+                            continue;
                         }
                     }
-                    else
-                    {
-                        throw;
-                    }
+
+                    throw;
                 }
             }
         }
+
 
         public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request, int retryAttempts)
         {
@@ -98,29 +98,30 @@ namespace Lithnet.GoogleApps
                 }
                 catch (Google.GoogleApiException ex)
                 {
+                    Trace.WriteLine($"Google API request error\n{request.HttpMethod} {ex.Error?.Code} {ex.Error?.Message}");
+
                     if (attemptCount <= retryAttempts)
                     {
-                        if (ex.HttpStatusCode == HttpStatusCode.Forbidden && ex.Message.Contains("quotaExceeded"))
+                        if (ex.HttpStatusCode == HttpStatusCode.Forbidden &&
+                            (ex.Message.IndexOf("quotaExceeded", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                            ex.Message.IndexOf("userRateLimitExceeded", StringComparison.OrdinalIgnoreCase) >= 0))
                         {
                             ApiExtensions.SleepThread(attemptCount);
+                            continue;
                         }
                         else if (ex.HttpStatusCode == HttpStatusCode.InternalServerError)
                         {
                             ApiExtensions.SleepThread(attemptCount);
+                            continue;
                         }
                         else if (ex.HttpStatusCode == HttpStatusCode.ServiceUnavailable)
                         {
                             ApiExtensions.SleepThread(attemptCount);
-                        }
-                        else
-                        {
-                            throw;
+                            continue;
                         }
                     }
-                    else
-                    {
-                        throw;
-                    }
+
+                    throw;
                 }
             }
         }
