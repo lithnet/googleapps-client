@@ -3,6 +3,7 @@ using Google.Apis.Groupssettings.v1;
 using Newtonsoft.Json;
 using Lithnet.GoogleApps.ManagedObjects;
 using Lithnet.GoogleApps.Api;
+using System.Threading;
 
 namespace Lithnet.GoogleApps
 {
@@ -18,7 +19,22 @@ namespace Lithnet.GoogleApps
             using (PoolItem<GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupSettingsGetRequest request = new GroupSettingsGetRequest(connection.Item, mail);
-                return request.ExecuteWithBackoff();
+
+                try
+                {
+                    return request.ExecuteWithBackoff();
+                }
+                catch (Google.GoogleApiException e)
+                {
+                    // 2016-10-29 Groupssettings is returning 400 randomly for some group settings. Subsequent calls seem to work
+                    if (e.HttpStatusCode == System.Net.HttpStatusCode.BadRequest)
+                    {
+                        Thread.Sleep(1000);
+                        return request.ExecuteWithBackoff();
+                    }
+
+                    throw;
+                }
             }
         }
 

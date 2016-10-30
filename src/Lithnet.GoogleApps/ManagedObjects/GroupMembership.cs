@@ -169,7 +169,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
         public void AddMember(string address)
         {
-            if (this.IsAddressInternal(address))
+            if (GroupMembership.IsAddressInternal(address))
             {
                 this.Members.Add(address);
             }
@@ -181,7 +181,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
         public void AddOwner(string address)
         {
-            if(this.IsAddressInternal(address))
+            if(GroupMembership.IsAddressInternal(address))
             {
                 this.Owners.Add(address);
             }
@@ -193,7 +193,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
         private void AddManager(string address)
         {
-            if (this.IsAddressInternal(address))
+            if (GroupMembership.IsAddressInternal(address))
             {
                 this.Managers.Add(address);
             }
@@ -203,7 +203,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
         }
 
-        private bool IsAddressInternal(string address)
+        public static bool IsAddressInternal(string address)
         {
             string[] split = address.Split('@');
 
@@ -225,6 +225,11 @@ namespace Lithnet.GoogleApps.ManagedObjects
             {
                 return false;
             }
+        }
+
+        public static bool IsAddressExternal(string address)
+        {
+            return !GroupMembership.IsAddressInternal(address);
         }
 
         public void MergeMembership(GroupMembership g)

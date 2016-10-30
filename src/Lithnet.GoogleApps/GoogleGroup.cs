@@ -16,14 +16,15 @@ namespace Lithnet.GoogleApps
         }
 
         public GoogleGroup(Group group)
-            : this()
+            : this(group, true, true)
         {
-            this.Group = group;
         }
 
         internal GoogleGroup(Group group, bool getSettings, bool getMembers)
-            : this(group)
+            : this()
         {
+            this.Group = group;
+
             if (getSettings)
             {
                 this.GetSettings();

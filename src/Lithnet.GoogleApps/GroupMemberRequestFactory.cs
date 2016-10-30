@@ -33,7 +33,7 @@ namespace Lithnet.GoogleApps
                 MembersResource.ListRequest request = poolService.Item.Members.List(groupKey);
                 request.PrettyPrint = false;
                 Trace.WriteLine($"Getting members from group {groupKey}");
-
+                
                 do
                 {
                     request.PageToken = token;
