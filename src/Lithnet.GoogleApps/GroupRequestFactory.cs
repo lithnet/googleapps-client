@@ -25,12 +25,12 @@ namespace Lithnet.GoogleApps
         public static int MemberThreads { get; set; }
 
         public static int SettingsThreads { get; set; }
-        
-        public static IEnumerable<GoogleGroup> GetGroups(string customerID, bool getMembers, bool getSettings, string groupFields, string settingsFields, bool excludeUserCreated = false, Regex regexFilter = null)
+
+        public static IEnumerable<GoogleGroup> GetUserGroups(string userKey, bool getMembers, bool getSettings, string groupFields, string settingsFields, bool excludeUserCreated = false, Regex regexFilter = null)
         {
             BlockingCollection<GoogleGroup> completedGroups = new BlockingCollection<GoogleGroup>();
 
-            Task t = new Task(() => GroupRequestFactory.PopulateGroups(customerID, groupFields, getSettings, getMembers, completedGroups, excludeUserCreated, regexFilter));
+            Task t = new Task(() => GroupRequestFactory.PopulateGroups(null, userKey, groupFields, getMembers, getSettings, completedGroups, excludeUserCreated, regexFilter));
             t.Start();
 
             foreach (GoogleGroup group in completedGroups.GetConsumingEnumerable())
@@ -40,7 +40,21 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        private static void PopulateGroups(string customerID, string groupFields, bool getSettings, bool getMembers, BlockingCollection<GoogleGroup> completedGroups, bool excludeUserCreated, Regex regexFilter)
+        public static IEnumerable<GoogleGroup> GetGroups(string customerID, bool getMembers, bool getSettings, string groupFields, string settingsFields, bool excludeUserCreated = false, Regex regexFilter = null)
+        {
+            BlockingCollection<GoogleGroup> completedGroups = new BlockingCollection<GoogleGroup>();
+
+            Task t = new Task(() => GroupRequestFactory.PopulateGroups(customerID, null, groupFields, getMembers, getSettings, completedGroups, excludeUserCreated, regexFilter));
+            t.Start();
+
+            foreach (GoogleGroup group in completedGroups.GetConsumingEnumerable())
+            {
+                Debug.WriteLine($"Group enumeration completed: {group.Group.Email}");
+                yield return group;
+            }
+        }
+
+        private static void PopulateGroups(string customerID, string userKey, string groupFields, bool getMembers, bool getSettings, BlockingCollection<GoogleGroup> completedGroups, bool excludeUserCreated, Regex regexFilter)
         {
             BlockingCollection<GoogleGroup> settingsQueue = new BlockingCollection<GoogleGroup>();
             BlockingCollection<GoogleGroup> membersQueue = new BlockingCollection<GoogleGroup>();
@@ -69,6 +83,7 @@ namespace Lithnet.GoogleApps
                     string token = null;
                     GroupsResource.ListRequest request = connection.Item.Groups.List();
                     request.Customer = customerID;
+                    request.UserKey = userKey;
                     request.MaxResults = 200;
                     request.Fields = groupFields;
                     request.PrettyPrint = false;
@@ -104,7 +119,7 @@ namespace Lithnet.GoogleApps
                                 }
                             }
 
-                            GoogleGroup g = new GoogleGroup(group);
+                            GoogleGroup g = new GoogleGroup(group, false, false);
                             g.RequiresMembers = getMembers;
                             g.RequiresSettings = getSettings;
 
@@ -153,7 +168,7 @@ namespace Lithnet.GoogleApps
                     {
                         group.GetMembership();
                         Debug.WriteLine($"Group membership completed: {group.Group.Email}");
-                        
+
                         if (group.IsComplete)
                         {
                             completedGroups.Add(group);

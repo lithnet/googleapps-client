@@ -24,6 +24,8 @@ namespace Lithnet.GoogleApps
             : this()
         {
             this.Group = group;
+            this.RequiresMembers = getMembers;
+            this.RequiresSettings = getSettings;
 
             if (getSettings)
             {

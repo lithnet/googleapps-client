@@ -33,7 +33,7 @@ namespace Lithnet.GoogleApps
                 MembersResource.ListRequest request = poolService.Item.Members.List(groupKey);
                 request.PrettyPrint = false;
                 Trace.WriteLine($"Getting members from group {groupKey}");
-                
+
                 do
                 {
                     request.PageToken = token;
@@ -137,6 +137,11 @@ namespace Lithnet.GoogleApps
 
         public static void RemoveMember(string groupID, string memberID)
         {
+            GroupMemberRequestFactory.RemoveMember(groupID, memberID, true);
+        }
+
+        public static void RemoveMember(string groupID, string memberID, bool throwOnMissingMember)
+        {
             try
             {
                 GroupMemberRequestFactory.WaitForGate();
@@ -145,7 +150,19 @@ namespace Lithnet.GoogleApps
                 {
                     MembersResource.DeleteRequest request = poolService.Item.Members.Delete(groupID, memberID);
                     Trace.WriteLine($"Removing member {memberID} from group {groupID}");
-                    request.ExecuteWithBackoff();
+                    try
+                    {
+                        request.ExecuteWithBackoff();
+                    }
+                    catch (GoogleApiException e)
+                    {
+                        if (!throwOnMissingMember && GroupMemberRequestFactory.ShouldIgnoreMissingMemberError(e.HttpStatusCode, e.Message))
+                        {
+                            return;
+                        }
+                        
+                        throw;
+                    }
                 }
             }
             finally
@@ -282,12 +299,9 @@ namespace Lithnet.GoogleApps
                 }
             }
 
-            if (ignoreMissingMember)
+            if (ignoreMissingMember && GroupMemberRequestFactory.ShouldIgnoreMissingMemberError(message.StatusCode, errorString))
             {
-                if (message.StatusCode == HttpStatusCode.NotFound && errorString.IndexOf("Resource Not Found: memberKey", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    return;
-                }
+                return;
             }
 
             if (message.StatusCode == HttpStatusCode.Forbidden && errorString.IndexOf("quotaExceeded", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -316,7 +330,7 @@ namespace Lithnet.GoogleApps
             {
                 foreach (string member in members)
                 {
-                    GroupMemberRequestFactory.RemoveMember(id, member);
+                    GroupMemberRequestFactory.RemoveMember(id, member, throwOnMissingMember);
                 }
 
                 return;
@@ -380,6 +394,22 @@ namespace Lithnet.GoogleApps
             {
                 GroupMemberRequestFactory.ReleaseGate();
             }
+        }
+
+        private static bool ShouldIgnoreMissingMemberError(HttpStatusCode statusCode, string message)
+        {
+            if (statusCode == HttpStatusCode.NotFound && message.IndexOf("Resource Not Found: memberKey", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            // This error code doesn't make sense, but the Google API has changed and now returns this response when a member is missing (as at 2016-12-02)
+            if (statusCode == HttpStatusCode.BadRequest && message.IndexOf("Missing required field: memberKey", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }
