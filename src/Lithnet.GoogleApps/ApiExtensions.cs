@@ -74,6 +74,11 @@ namespace Lithnet.GoogleApps
                             ApiExtensions.SleepThread(attemptCount);
                             continue;
                         }
+                        else if (ex.HttpStatusCode == (HttpStatusCode)429)
+                        {
+                            ApiExtensions.SleepThread(attemptCount);
+                            continue;
+                        }
                     }
 
                     throw;
@@ -115,6 +120,11 @@ namespace Lithnet.GoogleApps
                             continue;
                         }
                         else if (ex.HttpStatusCode == HttpStatusCode.ServiceUnavailable)
+                        {
+                            ApiExtensions.SleepThread(attemptCount);
+                            continue;
+                        }
+                        else if (ex.HttpStatusCode == (HttpStatusCode)429)
                         {
                             ApiExtensions.SleepThread(attemptCount);
                             continue;
