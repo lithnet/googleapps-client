@@ -398,7 +398,7 @@ namespace Lithnet.GoogleApps
 
         private static bool ShouldIgnoreMissingMemberError(HttpStatusCode statusCode, string message)
         {
-            if (statusCode == HttpStatusCode.NotFound && message.IndexOf("Resource Not Found: memberKey", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (statusCode == HttpStatusCode.NotFound && message.IndexOf("notFound", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return true;
             }
