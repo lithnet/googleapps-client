@@ -57,24 +57,7 @@ namespace Lithnet.GoogleApps
                 {
                     if (attemptCount <= retryAttempts)
                     {
-                        if (ex.HttpStatusCode == HttpStatusCode.Forbidden &&
-                            (ex.Message.IndexOf("quotaExceeded", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                             ex.Message.IndexOf("userRateLimitExceeded", StringComparison.OrdinalIgnoreCase) >= 0))
-                        {
-                            ApiExtensions.SleepThread(attemptCount);
-                            continue;
-                        }
-                        else if (ex.HttpStatusCode == HttpStatusCode.InternalServerError)
-                        {
-                            ApiExtensions.SleepThread(attemptCount);
-                            continue;
-                        }
-                        else if (ex.HttpStatusCode == HttpStatusCode.ServiceUnavailable)
-                        {
-                            ApiExtensions.SleepThread(attemptCount);
-                            continue;
-                        }
-                        else if (ex.HttpStatusCode == (HttpStatusCode)429)
+                        if (ApiExtensions.IsRetryableError(ex.HttpStatusCode, ex.Message))
                         {
                             ApiExtensions.SleepThread(attemptCount);
                             continue;
@@ -107,24 +90,7 @@ namespace Lithnet.GoogleApps
 
                     if (attemptCount <= retryAttempts)
                     {
-                        if (ex.HttpStatusCode == HttpStatusCode.Forbidden &&
-                            (ex.Message.IndexOf("quotaExceeded", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                            ex.Message.IndexOf("userRateLimitExceeded", StringComparison.OrdinalIgnoreCase) >= 0))
-                        {
-                            ApiExtensions.SleepThread(attemptCount);
-                            continue;
-                        }
-                        else if (ex.HttpStatusCode == HttpStatusCode.InternalServerError)
-                        {
-                            ApiExtensions.SleepThread(attemptCount);
-                            continue;
-                        }
-                        else if (ex.HttpStatusCode == HttpStatusCode.ServiceUnavailable)
-                        {
-                            ApiExtensions.SleepThread(attemptCount);
-                            continue;
-                        }
-                        else if (ex.HttpStatusCode == (HttpStatusCode)429)
+                        if (ApiExtensions.IsRetryableError(ex.HttpStatusCode, ex.Message))
                         {
                             ApiExtensions.SleepThread(attemptCount);
                             continue;
@@ -134,6 +100,30 @@ namespace Lithnet.GoogleApps
                     throw;
                 }
             }
+        }
+
+        public static bool IsRetryableError(HttpStatusCode code, string message)
+        {
+            switch (code)
+            {
+                case HttpStatusCode.InternalServerError:
+                case HttpStatusCode.ServiceUnavailable:
+                case (HttpStatusCode) 429:
+                    return true;
+
+                case HttpStatusCode.Forbidden:
+                    if (message.IndexOf("quotaExceeded", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        message.IndexOf("userRateLimitExceeded", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+            }
+
+            return false;
         }
 
         private static void SleepThread(int attemptCount)

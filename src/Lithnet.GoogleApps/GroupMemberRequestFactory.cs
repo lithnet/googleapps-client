@@ -20,7 +20,7 @@ namespace Lithnet.GoogleApps
 
         // Batch size can technically be up to 1000, but a google API error is returned with requests that seem to take more than 5.5 minutes
         // 500 works, but can timeout on the client side, unless the default HttpClient timeout is raised from the default of 100 seconds
-        // @ 250 we seem to get comparible updated objects/sec as at batch sizes of 500 and 750.
+        // @ 250 we seem to get comparable updated objects/sec as at batch sizes of 500 and 750.
         public static int BatchSize { get; set; } = 100;
 
         public static GroupMembership GetMembership(string groupKey)
@@ -79,7 +79,7 @@ namespace Lithnet.GoogleApps
             RateLimiter.ReleaseGate(GroupMemberRequestFactory.ServiceName);
         }
 
-        public static void AddMember(string groupID, string memberID, string role)
+        public static void AddMember(string groupID, string memberID, string role, bool throwOnExistingMember)
         {
             Member member = new Member();
 
@@ -94,10 +94,10 @@ namespace Lithnet.GoogleApps
 
             member.Role = role ?? "MEMBER";
 
-            AddMember(groupID, member);
+            AddMember(groupID, member, throwOnExistingMember);
         }
 
-        public static void AddMember(string groupID, Member item)
+        public static void AddMember(string groupID, Member item, bool throwOnExistingMember)
         {
             try
             {
@@ -109,6 +109,15 @@ namespace Lithnet.GoogleApps
                     Trace.WriteLine($"Adding member {item.Email ?? item.Id} as {item.Role} to group {groupID}");
                     request.ExecuteWithBackoff();
                 }
+            }
+            catch (GoogleApiException e)
+            {
+                if (!throwOnExistingMember && GroupMemberRequestFactory.IsExistingMemberError(e.HttpStatusCode, e.Message))
+                {
+                    return;
+                }
+
+                throw;
             }
             finally
             {
@@ -156,11 +165,11 @@ namespace Lithnet.GoogleApps
                     }
                     catch (GoogleApiException e)
                     {
-                        if (!throwOnMissingMember && GroupMemberRequestFactory.ShouldIgnoreMissingMemberError(e.HttpStatusCode, e.Message))
+                        if (!throwOnMissingMember && GroupMemberRequestFactory.IsMissingMemberError(e.HttpStatusCode, e.Message))
                         {
                             return;
                         }
-                        
+
                         throw;
                     }
                 }
@@ -177,7 +186,7 @@ namespace Lithnet.GoogleApps
             {
                 foreach (Member member in members)
                 {
-                    GroupMemberRequestFactory.AddMember(id, member);
+                    GroupMemberRequestFactory.AddMember(id, member, throwOnExistingMember);
                 }
 
                 return;
@@ -246,6 +255,17 @@ namespace Lithnet.GoogleApps
                 {
                     request.Value.ExecuteWithBackoff();
                 }
+                catch (GoogleApiException e)
+                {
+                    if (!(ignoreMissingMember && GroupMemberRequestFactory.IsMissingMemberError(e.HttpStatusCode, e.Message)))
+                    {
+                        if (!(ignoreExistingMember && GroupMemberRequestFactory.IsExistingMemberError(e.HttpStatusCode, e.Message)))
+                        {
+                            failures.Add(e);
+                            failedMembers.Add(request.Key);
+                        }
+                    }
+                }
                 catch (Exception ex)
                 {
                     failures.Add(ex);
@@ -291,29 +311,19 @@ namespace Lithnet.GoogleApps
 
             Trace.WriteLine($"{requestType}: Failed: Member: {memberKey}, Role: {memberRole}, Group: {id}\n{error}");
 
-            if (ignoreExistingMember)
-            {
-                if (message.StatusCode == HttpStatusCode.Conflict && errorString.IndexOf("member already exists", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    return;
-                }
-            }
-
-            if (ignoreMissingMember && GroupMemberRequestFactory.ShouldIgnoreMissingMemberError(message.StatusCode, errorString))
+            if (ignoreExistingMember && GroupMemberRequestFactory.IsExistingMemberError(message.StatusCode, errorString))
             {
                 return;
             }
 
-            if (message.StatusCode == HttpStatusCode.Forbidden && errorString.IndexOf("quotaExceeded", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (ignoreMissingMember && GroupMemberRequestFactory.IsMissingMemberError(message.StatusCode, errorString))
             {
-                Trace.WriteLine($"Queuing {requestType} of {memberKey} for backoff/retry");
-                requestsToRetry.Add(memberKey, request);
                 return;
             }
 
-            if (message.StatusCode == HttpStatusCode.ServiceUnavailable)
+            if (ApiExtensions.IsRetryableError(message.StatusCode, errorString))
             {
-                Trace.WriteLine($"Queuing {requestType} of {memberKey} for backoff/retry");
+                Trace.WriteLine($"Queuing {requestType} of {memberKey} from group {id} for backoff/retry");
                 requestsToRetry.Add(memberKey, request);
                 return;
             }
@@ -396,7 +406,17 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        private static bool ShouldIgnoreMissingMemberError(HttpStatusCode statusCode, string message)
+        private static bool IsExistingMemberError(HttpStatusCode statusCode, string message)
+        {
+            if (statusCode == HttpStatusCode.Conflict && message.IndexOf("member already exists", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsMissingMemberError(HttpStatusCode statusCode, string message)
         {
             if (statusCode == HttpStatusCode.NotFound && message.IndexOf("notFound", StringComparison.OrdinalIgnoreCase) >= 0)
             {
