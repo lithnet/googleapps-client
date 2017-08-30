@@ -79,6 +79,11 @@ namespace Lithnet.GoogleApps
             RateLimiter.ReleaseGate(GroupMemberRequestFactory.ServiceName);
         }
 
+        public static void AddMember(string groupID, string memberID, string role)
+        {
+            GroupMemberRequestFactory.AddMember(groupID, memberID, role, true);
+        }
+
         public static void AddMember(string groupID, string memberID, string role, bool throwOnExistingMember)
         {
             Member member = new Member();
@@ -95,6 +100,11 @@ namespace Lithnet.GoogleApps
             member.Role = role ?? "MEMBER";
 
             AddMember(groupID, member, throwOnExistingMember);
+        }
+
+        public static void AddMember(string groupID, Member item)
+        {
+            GroupMemberRequestFactory.AddMember(groupID, item, true);
         }
 
         public static void AddMember(string groupID, Member item, bool throwOnExistingMember)
