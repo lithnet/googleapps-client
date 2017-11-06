@@ -33,6 +33,13 @@ namespace Lithnet.GoogleApps
                         return request.ExecuteWithBackoff();
                     }
 
+                    // 2017-11-07 Groupssettings is returning 404 randomly for some group settings. Subsequent calls seem to work
+                    if (e.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        Thread.Sleep(1000);
+                        return request.ExecuteWithBackoff();
+                    }
+
                     throw;
                 }
             }
