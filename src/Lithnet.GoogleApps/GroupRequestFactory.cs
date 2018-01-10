@@ -289,7 +289,7 @@ namespace Lithnet.GoogleApps
             {
                 GroupsResource.AliasesResource.ListRequest request = connection.Item.Groups.Aliases.List(id);
                 Aliases aliases = request.ExecuteWithBackoff();
-                return aliases.AliasesValue.OfType<JObject>().Select(t => t.Value<string>("alias"));
+                return aliases.AliasesValue?.Select(t => t.AliasValue) ?? new List<string>();
             }
         }
     }

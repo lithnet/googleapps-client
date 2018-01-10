@@ -1,10 +1,9 @@
-﻿using Google.Apis.Admin.Directory.directory_v1.Data;
+﻿using Google.Apis.Admin.Directory.directory_v1;
+using Google.Apis.Admin.Directory.directory_v1.Data;
 using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps
 {
-    using Google.Apis.Admin.Directory.directory_v1;
-
     public static class SchemaRequestFactory
     {
         public static void CreateSchema(string customerID, Schema schema)
@@ -74,22 +73,27 @@ namespace Lithnet.GoogleApps
             }
         }
 
+        public static Schemas ListSchemas(string customerID)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                SchemasResource.ListRequest schemaReq = connection.Item.Schemas.List(customerID);
+                return schemaReq.ExecuteWithBackoff();
+            }
+        }
+
         public static bool HasAccessToSchema(string customerID)
         {
             try
             {
-                using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                Schemas schemas = SchemaRequestFactory.ListSchemas(customerID);
+                if (schemas != null)
                 {
-                    SchemasResource.ListRequest schemaReq = connection.Item.Schemas.List(customerID);
-                    Schemas schemas = schemaReq.ExecuteWithBackoff();
-                    if (schemas != null)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return true;
+                }
+                else
+                {
+                    return false;
                 }
             }
             catch (Google.GoogleApiException ex)
