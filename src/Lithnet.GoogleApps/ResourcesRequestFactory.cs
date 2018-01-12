@@ -109,5 +109,192 @@ namespace Lithnet.GoogleApps
                 return request.ExecuteWithBackoff();
             }
         }
+
+        public static IEnumerable<Building> GetBuildings(string customerID)
+        {
+            return ResourceRequestFactory.GetBuildings(customerID, null);
+        }
+
+        public static IEnumerable<Building> GetBuildings(string customerID, string fields)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                string token = null;
+
+                ResourcesResource.BuildingsResource.ListRequest request = new ResourcesResource.BuildingsResource.ListRequest(connection.Item, customerID);
+
+                if (fields != null)
+                {
+                    request.Fields = fields;
+                }
+
+                request.PrettyPrint = false;
+
+                do
+                {
+                    Buildings pageResults = request.ExecuteWithBackoff();
+
+                    if (pageResults.BuildingsValue == null)
+                    {
+                        break;
+                    }
+
+                    foreach (Building item in pageResults.BuildingsValue)
+                    {
+                        yield return item;
+                    }
+
+                    token = pageResults.NextPageToken;
+
+                } while (token != null);
+            }
+        }
+
+        public static void DeleteBuilding(string customerId, string id)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                ResourcesResource.BuildingsResource.DeleteRequest request = new ResourcesResource.BuildingsResource.DeleteRequest(connection.Item, customerId, id);
+                request.ExecuteWithBackoff();
+            }
+        }
+
+        public static Building GetBuilding(string customerId, string id)
+        {
+            return ResourceRequestFactory.GetBuilding(customerId, id, null);
+        }
+
+        public static Building  GetBuilding(string customerId, string id, string fields)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                ResourcesResource.BuildingsResource.GetRequest request = new ResourcesResource.BuildingsResource.GetRequest(connection.Item, customerId, id);
+
+                request.Fields = fields;
+
+                return request.ExecuteWithBackoff();
+            }
+        }
+
+        public static Building AddBuilding(string customerId, Building item)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                ResourcesResource.BuildingsResource.InsertRequest request = new ResourcesResource.BuildingsResource.InsertRequest(connection.Item, item, customerId);
+                return request.ExecuteWithBackoff();
+            }
+        }
+
+        public static Building PatchBuilding(string customerId, string id, Building item)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                ResourcesResource.BuildingsResource.PatchRequest request = new ResourcesResource.BuildingsResource.PatchRequest(connection.Item, item, customerId, id);
+                return request.ExecuteWithBackoff();
+            }
+        }
+
+        public static Building UpdateBuilding(string customerId, string id, Building item)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
+            {
+                ResourcesResource.BuildingsResource.UpdateRequest request = new ResourcesResource.BuildingsResource.UpdateRequest(connection.Item, item, customerId, id);
+                return request.ExecuteWithBackoff();
+            }
+        }
+
+
+        public static IEnumerable<Feature> GetFeatures(string customerID)
+        {
+            return ResourceRequestFactory.GetFeatures(customerID, null);
+        }
+
+        public static IEnumerable<Feature> GetFeatures(string customerID, string fields)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                string token = null;
+
+                ResourcesResource.FeaturesResource.ListRequest request = new ResourcesResource.FeaturesResource.ListRequest(connection.Item, customerID);
+
+                if (fields != null)
+                {
+                    request.Fields = fields;
+                }
+
+                request.PrettyPrint = false;
+
+                do
+                {
+                    Features pageResults = request.ExecuteWithBackoff();
+
+                    if (pageResults.FeaturesValue == null)
+                    {
+                        break;
+                    }
+
+                    foreach (Feature item in pageResults.FeaturesValue)
+                    {
+                        yield return item;
+                    }
+
+                    token = pageResults.NextPageToken;
+
+                } while (token != null);
+            }
+        }
+
+        public static void DeleteFeature(string customerId, string id)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                ResourcesResource.FeaturesResource.DeleteRequest request = new ResourcesResource.FeaturesResource.DeleteRequest(connection.Item, customerId, id);
+                request.ExecuteWithBackoff();
+            }
+        }
+
+        public static Feature GetFeature(string customerId, string id)
+        {
+            return ResourceRequestFactory.GetFeature(customerId, id, null);
+        }
+
+        public static Feature GetFeature(string customerId, string id, string fields)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                ResourcesResource.FeaturesResource.GetRequest request = new ResourcesResource.FeaturesResource.GetRequest(connection.Item, customerId, id);
+
+                request.Fields = fields;
+
+                return request.ExecuteWithBackoff();
+            }
+        }
+
+        public static Feature AddFeature(string customerId, Feature item)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                ResourcesResource.FeaturesResource.InsertRequest request = new ResourcesResource.FeaturesResource.InsertRequest(connection.Item, item, customerId);
+                return request.ExecuteWithBackoff();
+            }
+        }
+
+        public static Feature PatchFeature(string customerId, string id, Feature item)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            {
+                ResourcesResource.FeaturesResource.PatchRequest request = new ResourcesResource.FeaturesResource.PatchRequest(connection.Item, item, customerId, id);
+                return request.ExecuteWithBackoff();
+            }
+        }
+
+        public static Feature UpdateFeature(string customerId, string id, Feature item)
+        {
+            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
+            {
+                ResourcesResource.FeaturesResource.UpdateRequest request = new ResourcesResource.FeaturesResource.UpdateRequest(connection.Item, item, customerId, id);
+                return request.ExecuteWithBackoff();
+            }
+        }
     }
 }
