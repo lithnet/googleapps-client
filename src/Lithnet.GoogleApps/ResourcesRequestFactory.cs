@@ -9,6 +9,8 @@ using Newtonsoft.Json;
 using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Admin.Directory.directory_v1.Data;
 using System.Security;
+using Google.Apis.Calendar.v3;
+using Google.Apis.Calendar.v3.Data;
 
 namespace Lithnet.GoogleApps
 {
@@ -80,6 +82,97 @@ namespace Lithnet.GoogleApps
                 request.Fields = fields;
 
                 return request.ExecuteWithBackoff();
+            }
+        }
+
+        public static IEnumerable<AclRule> GetCalendarAclRules(string customerId, string calendarId)
+        {
+            return ResourceRequestFactory.GetCalendarAclRules(customerId, calendarId, null);
+        }
+
+        public static IEnumerable<AclRule> GetCalendarAclRules(string customerId, string calendarId, string fields)
+        {
+            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            {
+                AclResource.ListRequest request = new AclResource.ListRequest(connection.Item, calendarId);
+                string token = null;
+
+                request.MaxResults = 500;
+
+                if (fields != null)
+                {
+                    request.Fields = fields;
+                }
+
+                request.PrettyPrint = false;
+
+                do
+                {
+                    request.PageToken = token;
+
+                    Acl pageResults = request.ExecuteWithBackoff();
+
+                    if (pageResults.Items == null)
+                    {
+                        break;
+                    }
+
+                    foreach (AclRule item in pageResults.Items)
+                    {
+                        yield return item;
+                    }
+
+                    token = pageResults.NextPageToken;
+
+                } while (token != null);
+            }
+        }
+
+        public static void GetCalendarAclRule(string customerId, string calendarId, string ruleId)
+        {
+            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            {
+                AclResource.GetRequest request = new AclResource.GetRequest(connection.Item, calendarId, ruleId);
+                request.ExecuteWithBackoff();
+            }
+        }
+
+        public static void DeleteCalendarAclRule(string customerId, string calendarId, string ruleId)
+        {
+            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            {
+                AclResource.DeleteRequest request = new AclResource.DeleteRequest(connection.Item, calendarId, ruleId);
+                request.ExecuteWithBackoff();
+            }
+        }
+
+        public static void AddCalendarAclRule(string customerId, string calendarId, AclRule body, bool sendNotifications)
+        {
+            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            {
+                AclResource.InsertRequest request = new AclResource.InsertRequest(connection.Item, body, calendarId);
+                request.SendNotifications = sendNotifications;
+                request.ExecuteWithBackoff();
+            }
+        }
+
+        public static void UpdateCalendarAclRule(string customerId, string calendarId, string ruleId, AclRule body, bool sendNotifications)
+        {
+            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            {
+                AclResource.UpdateRequest request = new AclResource.UpdateRequest(connection.Item, body, calendarId, ruleId);
+                request.SendNotifications = sendNotifications;
+                request.ExecuteWithBackoff();
+            }
+        }
+
+        public static void PatchCalendarAclRule(string customerId, string calendarId, string ruleId, AclRule body, bool sendNotifications)
+        {
+            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            {
+                AclResource.PatchRequest request = new AclResource.PatchRequest(connection.Item, body, calendarId, ruleId);
+                request.SendNotifications = sendNotifications;
+                request.ExecuteWithBackoff();
             }
         }
 
@@ -164,7 +257,7 @@ namespace Lithnet.GoogleApps
             return ResourceRequestFactory.GetBuilding(customerId, id, null);
         }
 
-        public static Building  GetBuilding(string customerId, string id, string fields)
+        public static Building GetBuilding(string customerId, string id, string fields)
         {
             using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {

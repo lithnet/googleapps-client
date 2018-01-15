@@ -4,6 +4,8 @@ using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Groupssettings.v1;
 using Google.Apis.Services;
 using Google.Apis.Auth.OAuth2;
+using Google.Apis.Calendar.v3;
+using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Http;
 using Google.GData.Contacts;
 
@@ -17,6 +19,8 @@ namespace Lithnet.GoogleApps
 
         private static BaseClientServicePool<GroupssettingsService> groupSettingServicePool;
 
+        private static BaseClientServicePool<CalendarService> calendarServicePool;
+        
         private static Pool<EmailSettingsService> userSettingsServicePool;
 
         private static Pool<ContactsService> contactsServicePool;
@@ -29,9 +33,17 @@ namespace Lithnet.GoogleApps
 
         public static Pool<ContactsService> ContactsServicePool => ConnectionPools.contactsServicePool;
 
+        public static BaseClientServicePool<CalendarService> CalendarServicePool => ConnectionPools.calendarServicePool;
+
         public static void SetRateLimitDirectoryService(int requestsPerInterval, TimeSpan interval)
         {
             DirectoryService service = new DirectoryService();
+            RateLimiter.SetRateLimit(service.Name, requestsPerInterval, interval);
+        }
+
+        public static void SetRateLimitCalendarService(int requestsPerInterval, TimeSpan interval)
+        {
+            CalendarService service = new CalendarService();
             RateLimiter.SetRateLimit(service.Name, requestsPerInterval, interval);
         }
 
@@ -56,7 +68,7 @@ namespace Lithnet.GoogleApps
             RateLimiter.SetConcurrentLimit(GroupMemberRequestFactory.ServiceName, maxConcurrentOperations);
         }
 
-        public static void InitializePools(ServiceAccountCredential credentials, int directoryServicePoolSize, int groupSettingServicePoolSize, int userSettingsPoolSize, int contactsPoolSize)
+        public static void InitializePools(ServiceAccountCredential credentials, int directoryServicePoolSize, int groupSettingServicePoolSize, int userSettingsPoolSize, int contactsPoolSize, int calendarPoolSize)
         {
             ConnectionPools.PopulateDirectoryServicePool(credentials, directoryServicePoolSize);
             ConnectionPools.PopulateGroupSettingServicePool(credentials, groupSettingServicePoolSize);
@@ -64,6 +76,7 @@ namespace Lithnet.GoogleApps
             
             ConnectionPools.PopulateUserSettingsServicePool(credentials, userSettingsPoolSize);
             ConnectionPools.PopulateContactsServicePool(credentials, contactsPoolSize);
+            ConnectionPools.PopulateCalendarServicePool(credentials, calendarPoolSize);
         }
 
         private static void PopulateUserSettingsServicePool(ServiceAccountCredential credentials, int size)
@@ -76,6 +89,24 @@ namespace Lithnet.GoogleApps
                 requestFactory.UseGZip = !ConnectionPools.DisableGzip;
                 service.RequestFactory = requestFactory;
                 return service;
+            });
+        }
+
+        private static void PopulateCalendarServicePool(ServiceAccountCredential credentials, int size)
+        {
+            ConnectionPools.calendarServicePool = new BaseClientServicePool<CalendarService>(size, () =>
+            {
+                CalendarService x = new CalendarService(new BaseClientService.Initializer()
+                {
+                    HttpClientInitializer = credentials,
+                    ApplicationName = "LithnetGoogleAppsLibrary",
+                    GZipEnabled = !ConnectionPools.DisableGzip,
+                    Serializer = new GoogleJsonSerializer(),
+                    DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
+                });
+
+                x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                return x;
             });
         }
 
