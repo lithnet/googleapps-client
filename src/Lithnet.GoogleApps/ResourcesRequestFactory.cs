@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Admin.Directory.directory_v1.Data;
 using System.Security;
+using System.Threading;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 
@@ -110,7 +111,25 @@ namespace Lithnet.GoogleApps
                 {
                     request.PageToken = token;
 
-                    Acl pageResults = request.ExecuteWithBackoff();
+                    Acl pageResults;
+
+                    try
+                    {
+                        pageResults = request.ExecuteWithBackoff();
+                    }
+                    catch (Google.GoogleApiException e)
+                    {
+                        // 2018-01-17 List ACL is returning 404 randomly for some calendars. Subsequent calls seem to work
+                        if (e.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+                        {
+                            Thread.Sleep(1000);
+                            pageResults = request.ExecuteWithBackoff();
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
 
                     if (pageResults.Items == null)
                     {
