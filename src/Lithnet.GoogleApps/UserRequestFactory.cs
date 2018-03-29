@@ -22,6 +22,11 @@ namespace Lithnet.GoogleApps
 
         public static IEnumerable<User> GetUsers(string customerID, string fields)
         {
+            return UserRequestFactory.GetUsers(customerID, null, null);
+        }
+
+        public static IEnumerable<User> GetUsers(string customerID, string fields, string query)
+        {
             using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
@@ -37,6 +42,7 @@ namespace Lithnet.GoogleApps
                     request.Fields = fields;
                 }
 
+                request.Query = query;
                 request.PrettyPrint = false;
                 
                 do
