@@ -6,6 +6,7 @@ using Google.Apis.Services;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
+using Google.Apis.Gmail.v1;
 using Google.Apis.Http;
 using Google.GData.Contacts;
 
@@ -21,16 +22,16 @@ namespace Lithnet.GoogleApps
 
         private static BaseClientServicePool<CalendarService> calendarServicePool;
         
-        private static Pool<EmailSettingsService> userSettingsServicePool;
-
+        private static Pool<GmailService> gmailServicePool;
+        
         private static Pool<ContactsService> contactsServicePool;
 
         public static BaseClientServicePool<DirectoryService> DirectoryServicePool => ConnectionPools.directoryServicePool;
 
         public static BaseClientServicePool<GroupssettingsService> GroupSettingServicePool => ConnectionPools.groupSettingServicePool;
 
-        public static Pool<EmailSettingsService> UserSettingsServicePool => ConnectionPools.userSettingsServicePool;
-
+        public static Pool<GmailService> GmailServicePool => ConnectionPools.gmailServicePool;
+        
         public static Pool<ContactsService> ContactsServicePool => ConnectionPools.contactsServicePool;
 
         public static BaseClientServicePool<CalendarService> CalendarServicePool => ConnectionPools.calendarServicePool;
@@ -53,14 +54,14 @@ namespace Lithnet.GoogleApps
             RateLimiter.SetRateLimit(service.Name, requestsPerInterval, interval);
         }
 
-        public static void SetRateLimitEmailSettingsService(int requestsPerInterval, TimeSpan interval)
-        {
-            RateLimiter.SetRateLimit(typeof(EmailSettingsService).Name, requestsPerInterval, interval);
-        }
-
         public static void SetRateLimitContactsService(int requestsPerInterval, TimeSpan interval)
         {
             RateLimiter.SetRateLimit(typeof(ContactsService).Name, requestsPerInterval, interval);
+        }
+        
+        public static void SetRateLimitGmailService(int requestsPerInterval, TimeSpan interval)
+        {
+            RateLimiter.SetRateLimit(typeof(GmailService).Name, requestsPerInterval, interval);
         }
 
         public static void SetConcurrentOperationLimitGroupMember(int maxConcurrentOperations)
@@ -74,29 +75,17 @@ namespace Lithnet.GoogleApps
             ConnectionPools.PopulateGroupSettingServicePool(credentials, groupSettingServicePoolSize);
             GroupRequestFactory.SettingsThreads = groupSettingServicePoolSize;
             
-            ConnectionPools.PopulateUserSettingsServicePool(credentials, userSettingsPoolSize);
+            ConnectionPools.PopulateGmailServicePool(credentials, userSettingsPoolSize);
             ConnectionPools.PopulateContactsServicePool(credentials, contactsPoolSize);
             ConnectionPools.PopulateCalendarServicePool(credentials, calendarPoolSize);
-        }
-
-        private static void PopulateUserSettingsServicePool(ServiceAccountCredential credentials, int size)
-        {
-            ConnectionPools.userSettingsServicePool = new Pool<EmailSettingsService>(size, () =>
-            {
-                credentials.RequestAccessTokenAsync(System.Threading.CancellationToken.None).Wait();
-                EmailSettingsService service = new EmailSettingsService("Lithnet.GoogleApps");
-                OAuthGDataRequestFactory requestFactory = new OAuthGDataRequestFactory("Lithnet.GoogleApps", credentials);
-                requestFactory.UseGZip = !ConnectionPools.DisableGzip;
-                service.RequestFactory = requestFactory;
-                return service;
-            });
         }
 
         private static void PopulateCalendarServicePool(ServiceAccountCredential credentials, int size)
         {
             ConnectionPools.calendarServicePool = new BaseClientServicePool<CalendarService>(size, () =>
             {
-                CalendarService x = new CalendarService(new BaseClientService.Initializer()
+                CalendarService x = new CalendarService(
+                    new BaseClientService.Initializer()
                 {
                     HttpClientInitializer = credentials,
                     ApplicationName = "LithnetGoogleAppsLibrary",
@@ -140,7 +129,24 @@ namespace Lithnet.GoogleApps
                     x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
                     return x;
                 });
+        }
 
+        private static void PopulateGmailServicePool(ServiceAccountCredential credentials, int size)
+        {
+            ConnectionPools.gmailServicePool = new BaseClientServicePool<GmailService>(size, () =>
+            {
+                GmailService x = new GmailService(new BaseClientService.Initializer()
+                {
+                    HttpClientInitializer = credentials,
+                    ApplicationName = "LithnetGoogleAppsLibrary",
+                    GZipEnabled = !ConnectionPools.DisableGzip,
+                    Serializer = new GoogleJsonSerializer(),
+                    DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
+                });
+
+                x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                return x;
+            });
         }
 
         private static void PopulateGroupSettingServicePool(ServiceAccountCredential credentials, int size)
