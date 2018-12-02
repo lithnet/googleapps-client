@@ -16,26 +16,9 @@ namespace Lithnet.GoogleApps
         }
 
         public GoogleGroup(Group group)
-            : this(group, true, true)
-        {
-        }
-
-        internal GoogleGroup(Group group, bool getSettings, bool getMembers)
             : this()
         {
             this.Group = group;
-            this.RequiresMembers = getMembers;
-            this.RequiresSettings = getSettings;
-
-            if (getSettings)
-            {
-                this.GetSettings();
-            }
-
-            if (getMembers)
-            {
-                this.GetMembership();
-            }
         }
 
         public GroupSettings Settings { get; internal set; }
@@ -61,47 +44,8 @@ namespace Lithnet.GoogleApps
 
         internal bool LoadedMembers { get; set; }
 
-        internal void GetSettings()
-        {
-            lock (this)
-            {
-                try
-                {
-                    this.Settings = GroupSettingsRequestFactory.Get(this.Group.Email);
-                }
-                catch (Exception ex)
-                {
-                    this.Errors.Add(ex);
-                }
-                finally
-                {
-                    this.LoadedSettings = true;
-                }
-            }
-        }
-
-        internal void GetMembership()
-        {
-            lock (this)
-            {
-                try
-                {
-                    this.Membership = GroupMemberRequestFactory.GetMembership(this.Group.Email);
-                }
-                catch (Exception ex)
-                {
-                    this.Errors.Add(ex);
-                }
-                finally
-                {
-                    this.LoadedMembers = true;
-                }
-            }
-        }
-
         internal bool RequiresSettings { get; set; }
 
         internal bool RequiresMembers { get; set; }
-
     }
 }

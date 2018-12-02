@@ -1,174 +1,171 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using Google.Apis.Auth.OAuth2;
 using Google.Apis.Gmail.v1;
 using Google.Apis.Gmail.v1.Data;
+using Google.Apis.Http;
+using Google.Apis.Services;
+using Delegate = Google.Apis.Gmail.v1.Data.Delegate;
 
 namespace Lithnet.GoogleApps
 {
-    public static class GmailServiceRequestFactory
+    public class GmailServiceRequestFactory
     {
-        private static string serviceName;
+        private readonly X509Certificate2 x509Certificate;
 
-        static GmailServiceRequestFactory()
+        private readonly string serviceAccountID;
+
+        private readonly string[] scopes;
+
+        private readonly OrderedDictionary cache = new OrderedDictionary(100);
+
+        public GmailServiceRequestFactory(string serviceAccountID, X509Certificate2 x509Certificate, string[] scopes)
         {
-            GmailServiceRequestFactory.serviceName = typeof(GmailService).Name;
+            this.x509Certificate = x509Certificate;
+            this.serviceAccountID = serviceAccountID;
+            this.scopes = scopes;
         }
 
-        public static IEnumerable<string> GetDelegates(string id)
+        private GmailService GetService(string user)
         {
-            if (id.IndexOf("@", StringComparison.Ordinal) < 0)
+            if (!this.cache.Contains(user))
             {
-                throw new ArgumentException("Mail argument must be a valid email address");
-            }
-
-            RateLimiter.GetOrCreateBucket(GmailServiceRequestFactory.serviceName).Consume();
-
-            using (PoolItem<GmailService> connection = ConnectionPools.GmailServicePool.Take())
-            {
-                var request = connection.Item.Users.Settings.Delegates.List(id);
-                var result = request.ExecuteWithBackoff();
-
-                return result.Delegates.Select(t => t.DelegateEmail);
-            }
-        }
-
-        public static IEnumerable<string> GetSendAs(string id)
-        {
-            if (id.IndexOf("@", StringComparison.Ordinal) < 0)
-            {
-                throw new ArgumentException("Mail argument must be a valid email address");
-            }
-
-            RateLimiter.GetOrCreateBucket(GmailServiceRequestFactory.serviceName).Consume();
-
-            using (PoolItem<GmailService> connection = ConnectionPools.GmailServicePool.Take())
-            {
-                var request = connection.Item.Users.Settings.SendAs.List(id);
-                var result = request.ExecuteWithBackoff();
-
-                return result.SendAs.Select(t => t.SendAsEmail);
-            }
-        }
-
-        public static void RemoveDelegate(string id, string @delegate)
-        {
-            RateLimiter.GetOrCreateBucket(GmailServiceRequestFactory.serviceName).Consume();
-
-            using (PoolItem<GmailService> connection = ConnectionPools.GmailServicePool.Take())
-            {
-                var request = connection.Item.Users.Settings.Delegates.Delete(id, @delegate);
-                request.ExecuteWithBackoff();
-            }
-        }
-
-        public static void RemoveSendAs(string id, string sendas)
-        {
-            RateLimiter.GetOrCreateBucket(GmailServiceRequestFactory.serviceName).Consume();
-
-            using (PoolItem<GmailService> connection = ConnectionPools.GmailServicePool.Take())
-            {
-                var request = connection.Item.Users.Settings.SendAs.Delete(id, sendas);
-                request.ExecuteWithBackoff();
-            }
-        }
-
-        public static void RemoveDelegate(string id)
-        {
-            RateLimiter.GetOrCreateBucket(GmailServiceRequestFactory.serviceName).Consume();
-
-            using (PoolItem<GmailService> connection = ConnectionPools.GmailServicePool.Take())
-            {
-                var result = connection.Item.Users.Settings.Delegates.List(id).ExecuteWithBackoff();
-
-                foreach (var item in result.Delegates)
+                ServiceAccountCredential.Initializer initializerInstance = new ServiceAccountCredential.Initializer(this.serviceAccountID)
                 {
-                    connection.Item.Users.Settings.Delegates.Delete(id, item.DelegateEmail).ExecuteWithBackoff();
+                    User = user,
+                    Scopes = this.scopes
+                }.FromCertificate(this.x509Certificate);
+
+                GmailService x = new GmailService(new BaseClientService.Initializer()
+                {
+                    HttpClientInitializer = new ServiceAccountCredential(initializerInstance),
+                    ApplicationName = "LithnetGoogleAppsLibrary",
+                    GZipEnabled = !Settings.DisableGzip,
+                    Serializer = new GoogleJsonSerializer(),
+                    DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
+                });
+
+                x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                this.cache.Add(user, x);
+
+                if (this.cache.Count > 100)
+                {
+                    this.cache.RemoveAt(0);
+                }
+            }
+
+            return (GmailService)this.cache[user];
+        }
+
+        public IEnumerable<string> GetDelegates(string id)
+        {
+            id.ThrowIfNotEmailAddress();
+
+            GmailService service = this.GetService(id);
+            UsersResource.SettingsResource.DelegatesResource.ListRequest request = service.Users.Settings.Delegates.List(id);
+            ListDelegatesResponse result = request.ExecuteWithBackoff();
+            return result.Delegates?.Select(t => t.DelegateEmail) ?? new List<string>();
+        }
+
+        public IEnumerable<string> GetSendAs(string id)
+        {
+            id.ThrowIfNotEmailAddress();
+
+            GmailService service = this.GetService(id);
+            UsersResource.SettingsResource.SendAsResource.ListRequest request = service.Users.Settings.SendAs.List(id);
+            ListSendAsResponse result = request.ExecuteWithBackoff();
+            return result.SendAs?.Select(t => t.SendAsEmail) ?? new List<string>();
+        }
+
+        public void RemoveDelegate(string id, string @delegate)
+        {
+            id.ThrowIfNotEmailAddress();
+
+            GmailService service = this.GetService(id);
+            UsersResource.SettingsResource.DelegatesResource.DeleteRequest request = service.Users.Settings.Delegates.Delete(id, @delegate);
+            request.ExecuteWithBackoff(-1, 5);
+        }
+
+        public void RemoveSendAs(string id, string sendas)
+        {
+            id.ThrowIfNotEmailAddress();
+
+            GmailService service = this.GetService(id);
+            UsersResource.SettingsResource.SendAsResource.DeleteRequest request = service.Users.Settings.SendAs.Delete(id, sendas);
+            request.ExecuteWithBackoff(-1, 5);
+        }
+
+        public void RemoveDelegate(string id)
+        {
+            id.ThrowIfNotEmailAddress();
+
+            GmailService service = this.GetService(id);
+            ListDelegatesResponse result = service.Users.Settings.Delegates.List(id).ExecuteWithBackoff();
+
+            if (result.Delegates != null)
+            {
+                foreach (Delegate item in result.Delegates)
+                {
+                    service.Users.Settings.Delegates.Delete(id, item.DelegateEmail).ExecuteWithBackoff(-1, 5);
                 }
             }
         }
-        public static void RemoveSendAs(string id)
+
+        public void RemoveSendAs(string id)
         {
-            RateLimiter.GetOrCreateBucket(GmailServiceRequestFactory.serviceName).Consume();
+            id.ThrowIfNotEmailAddress();
 
-            using (PoolItem<GmailService> connection = ConnectionPools.GmailServicePool.Take())
+            GmailService service = this.GetService(id);
+            ListSendAsResponse result = service.Users.Settings.SendAs.List(id).ExecuteWithBackoff();
+
+            if (result.SendAs != null)
             {
-                var result = connection.Item.Users.Settings.SendAs.List(id).ExecuteWithBackoff();
-
-                foreach (var item in result.SendAs)
+                foreach (SendAs item in result.SendAs)
                 {
-                    connection.Item.Users.Settings.SendAs.Delete(id, item.SendAsEmail).ExecuteWithBackoff();
+                    service.Users.Settings.SendAs.Delete(id, item.SendAsEmail).ExecuteWithBackoff(-1, 5);
                 }
             }
         }
 
-        public static void AddDelegate(string id, string @delegate)
+        public void AddDelegate(string id, string @delegate)
         {
-            if (id.IndexOf("@", StringComparison.Ordinal) < 0)
-            {
-                throw new ArgumentException("Mail argument must be a valid email address");
-            }
+            id.ThrowIfNotEmailAddress();
 
-            using (PoolItem<GmailService> connection = ConnectionPools.GmailServicePool.Take())
-            {
-                Google.Apis.Gmail.v1.Data.Delegate d = new Google.Apis.Gmail.v1.Data.Delegate();
-                d.DelegateEmail = @delegate;
+            GmailService service = this.GetService(id);
+            service.Users.Settings.Delegates.Create(new Delegate { DelegateEmail = @delegate }, id).ExecuteWithBackoff(-1, 100);
+        }
 
-                connection.Item.Users.Settings.Delegates.Create(d, id).ExecuteWithBackoff();
+        public void AddSendAs(string id, string sendAs)
+        {
+            id.ThrowIfNotEmailAddress();
+
+            GmailService service = this.GetService(id);
+            service.Users.Settings.SendAs.Create(new SendAs { SendAsEmail = sendAs }, id).ExecuteWithBackoff(-1, 100);
+        }
+
+        public void AddSendAs(string id, IEnumerable<string> sendAs)
+        {
+            id.ThrowIfNotEmailAddress();
+
+            GmailService service = this.GetService(id);
+            foreach (string item in sendAs)
+            {
+                service.Users.Settings.SendAs.Create(new SendAs { SendAsEmail = item }, id).ExecuteWithBackoff(-1, 100);
             }
         }
 
-        public static void AddSendAs(string id, string sendAs)
+        public void AddDelegate(string id, IEnumerable<string> delegates)
         {
-            if (id.IndexOf("@", StringComparison.Ordinal) < 0)
-            {
-                throw new ArgumentException("Mail argument must be a valid email address");
-            }
+            id.ThrowIfNotEmailAddress();
 
-            using (PoolItem<GmailService> connection = ConnectionPools.GmailServicePool.Take())
+            GmailService service = this.GetService(id);
+            foreach (string item in delegates)
             {
-                SendAs s = new SendAs();
-                s.SendAsEmail = sendAs;
-
-                connection.Item.Users.Settings.SendAs.Create(s, id).ExecuteWithBackoff();
-            }
-        }
-  
-        public static void AddSendAs(string id, IEnumerable<string> sendAs)
-        {
-            if (id.IndexOf("@", StringComparison.Ordinal) < 0)
-            {
-                throw new ArgumentException("Mail argument must be a valid email address");
-            }
-
-            using (PoolItem<GmailService> connection = ConnectionPools.GmailServicePool.Take())
-            {
-                foreach (string item in sendAs)
-                {
-                    SendAs s = new SendAs();
-                    s.SendAsEmail = item;
-
-                    connection.Item.Users.Settings.SendAs.Create(s, id).ExecuteWithBackoff();
-                }
-            }
-        }
-        
-        public static void AddDelegate(string id, IEnumerable<string> delegates)
-        {
-            if (id.IndexOf("@", StringComparison.Ordinal) < 0)
-            {
-                throw new ArgumentException("Mail argument must be a valid email address");
-            }
-
-            using (PoolItem<GmailService> connection = ConnectionPools.GmailServicePool.Take())
-            {
-                foreach (string item in delegates)
-                {
-                    Google.Apis.Gmail.v1.Data.Delegate s = new Google.Apis.Gmail.v1.Data.Delegate();
-                    s.DelegateEmail = item;
-
-                    connection.Item.Users.Settings.Delegates.Create(s, id).ExecuteWithBackoff();
-                }
+                service.Users.Settings.Delegates.Create(new Delegate { DelegateEmail = item }, id).ExecuteWithBackoff(-1, 100);
             }
         }
     }

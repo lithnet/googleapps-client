@@ -1,25 +1,40 @@
-﻿using Google.GData.Contacts;
+﻿using System;
+using Google.GData.Contacts;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using Google.Apis.Auth.OAuth2;
 
 namespace Lithnet.GoogleApps
 {
-    public static class ContactRequestFactory
+    public class ContactRequestFactory
     {
-        private static string serviceName;
+        private readonly Pool<ContactsService> contactsServicePool;
 
-        static ContactRequestFactory()
+        private readonly string serviceName = "ContactRequestFactory";
+
+        public ContactRequestFactory(GoogleServiceCredentials creds, string[] scopes, int poolSize = 30)
         {
-            ContactRequestFactory.serviceName = typeof(ContactsService).Name;
+            ServiceAccountCredential credentials = new ServiceAccountCredential(creds.GetInitializer(scopes));
+
+            this.contactsServicePool = new Pool<ContactsService>(poolSize, () =>
+            {
+                ContactsService service = new ContactsService("Lithnet.GoogleApps");
+                OAuthGDataRequestFactory requestFactory = new OAuthGDataRequestFactory("Lithnet.GoogleApps", credentials);
+                requestFactory.CustomHeaders.Add("GData-Version: 3.0");
+                requestFactory.UseGZip = !Settings.DisableGzip;
+                service.RequestFactory = requestFactory;
+                return service;
+            });
+
         }
 
-        public static IEnumerable<ContactEntry> GetContacts(string domain)
+        public IEnumerable<ContactEntry> GetContacts(string domain)
         {
-
-            using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
+            using (PoolItem<ContactsService> connection = this.contactsServicePool.Take())
             {
                 string uri = ContactsQuery.CreateContactsUri(domain);
-             
+
                 do
                 {
                     ContactsQuery request = new ContactsQuery(uri)
@@ -27,65 +42,58 @@ namespace Lithnet.GoogleApps
                         NumberToRetrieve = 1000
                     };
 
-                    RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
-                    ContactsFeed x = connection.Item.Query(request);
+                    ContactsFeed result = ApiExtensions.InvokeWithRateLimit(() => connection.Item.Query(request), this.serviceName);
 
-                    foreach (ContactEntry entry in x.Entries.OfType<ContactEntry>())
+                    foreach (ContactEntry entry in result.Entries.OfType<ContactEntry>())
                     {
                         yield return entry;
                     }
 
-                    uri = x.NextChunk;
+                    uri = result.NextChunk;
 
                 } while (uri != null);
 
             }
         }
 
-        public static ContactEntry GetContact(string id)
+        public ContactEntry GetContact(string id)
         {
-            using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
+            using (PoolItem<ContactsService> connection = this.contactsServicePool.Take())
             {
-                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
-                return (ContactEntry)connection.Item.Get(id);
+                return ApiExtensions.InvokeWithRateLimit(() => (ContactEntry)connection.Item.Get(id), this.serviceName);
             }
         }
 
-        public static void Delete(string id)
+        public void Delete(string id)
         {
-            using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
+            using (PoolItem<ContactsService> connection = this.contactsServicePool.Take())
             {
-                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
-                ContactEntry e = (ContactEntry)(connection.Item.Get(id));
-                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
-                connection.Item.Delete(e);
+                ContactEntry e = ApiExtensions.InvokeWithRateLimit(() => (ContactEntry)connection.Item.Get(id), this.serviceName);
+                this.Delete(e);
             }
         }
 
-        public static void Delete(ContactEntry c)
+        public void Delete(ContactEntry c)
         {
-            using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
+            using (PoolItem<ContactsService> connection = this.contactsServicePool.Take())
             {
-                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
-                connection.Item.Delete(c.EditUri.ToString());
+                ApiExtensions.InvokeWithRateLimit(() => connection.Item.Delete(c), this.serviceName);
             }
         }
 
-        public static ContactEntry Update(ContactEntry c)
+        public ContactEntry Update(ContactEntry c)
         {
-            using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
+            using (PoolItem<ContactsService> connection = this.contactsServicePool.Take())
             {
-                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
-                return connection.Item.Update(c);
+                return ApiExtensions.InvokeWithRateLimit(() => connection.Item.Update(c), this.serviceName);
             }
         }
 
-        public static ContactEntry Add(ContactEntry c, string domain)
+        public ContactEntry Add(ContactEntry c, string domain)
         {
-            using (PoolItem<ContactsService> connection = ConnectionPools.ContactsServicePool.Take())
+            using (PoolItem<ContactsService> connection = this.contactsServicePool.Take())
             {
-                RateLimiter.GetOrCreateBucket(ContactRequestFactory.serviceName).Consume();
-                return connection.Item.Insert($"https://www.google.com/m8/feeds/contacts/{domain}/full", c);
+                return ApiExtensions.InvokeWithRateLimit(() => connection.Item.Insert($"https://www.google.com/m8/feeds/contacts/{domain}/full", c), this.serviceName);
             }
         }
     }

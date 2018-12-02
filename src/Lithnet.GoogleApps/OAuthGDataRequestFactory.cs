@@ -18,29 +18,16 @@ namespace Lithnet.GoogleApps
 
         public void RefreshToken()
         {
-            Task<string> task = this.Credentials.GetAccessTokenForRequestAsync();
-            task.Wait();
+            string token = this.Credentials.GetAccessTokenForRequestAsync().GetAwaiter().GetResult();
 
-            if (task.IsFaulted)
-            {
-                if (task.Exception != null)
-                {
-                    throw task.Exception;
-                }
-                else
-                {
-                    throw new InvalidOperationException();
-                }
-            }
-
-            if (this.lastToken == task.Result)
+            if (this.lastToken == token)
             {
                 return;
             }
 
             this.CustomHeaders.RemoveAll(t => t.StartsWith("Authorization:"));
-            this.CustomHeaders.Add($"Authorization: Bearer {task.Result}");
-            this.lastToken = task.Result;
+            this.CustomHeaders.Add($"Authorization: Bearer {token}");
+            this.lastToken = token;
         }
 
         public override IGDataRequest CreateRequest(GDataRequestType type, Uri uriTarget)

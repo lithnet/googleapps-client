@@ -4,19 +4,39 @@ using Newtonsoft.Json;
 using Lithnet.GoogleApps.ManagedObjects;
 using Lithnet.GoogleApps.Api;
 using System.Threading;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Http;
+using Google.Apis.Services;
 
 namespace Lithnet.GoogleApps
 {
-    public static class GroupSettingsRequestFactory
+    public class GroupSettingsRequestFactory
     {
-        public static GroupSettings Get(string mail)
-        {
-            if (mail.IndexOf("@", StringComparison.Ordinal) < 1)
-            {
-                throw new ArgumentException("The group key must be the group email address");
-            }
+        private readonly BaseClientServicePool<GroupssettingsService> groupSettingsServicePool;
 
-            using (PoolItem<GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
+        internal GroupSettingsRequestFactory(GoogleServiceCredentials creds, string[] scopes, int poolSize)
+        {
+            this.groupSettingsServicePool = new BaseClientServicePool<GroupssettingsService>(poolSize, () =>
+            {
+                GroupssettingsService x = new GroupssettingsService(new BaseClientService.Initializer()
+                {
+                    HttpClientInitializer = new ServiceAccountCredential(creds.GetInitializer(scopes)),
+                    ApplicationName = "LithnetGoogleAppsLibrary",
+                    GZipEnabled = !Settings.DisableGzip,
+                    Serializer = new GoogleJsonSerializer(),
+                    DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None
+                });
+
+                x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                return x;
+            });
+        }
+
+        public GroupSettings Get(string mail)
+        {
+            mail.ThrowIfNotEmailAddress();
+
+            using (PoolItem<GroupssettingsService> connection = this.groupSettingsServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupSettingsGetRequest request = new GroupSettingsGetRequest(connection.Item, mail);
 
@@ -45,28 +65,22 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static GroupSettings Update(string mail, GroupSettings item)
+        public GroupSettings Update(string mail, GroupSettings item)
         {
-            if (mail.IndexOf("@", StringComparison.Ordinal) < 1)
-            {
-                throw new ArgumentException("The group key must be the group email address");
-            }
+            mail.ThrowIfNotEmailAddress();
 
-            using (PoolItem<GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Include))
+            using (PoolItem<GroupssettingsService> connection = this.groupSettingsServicePool.Take(NullValueHandling.Include))
             {
                 GroupSettingsUpdateRequest request = new GroupSettingsUpdateRequest(connection.Item, item, mail);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static GroupSettings Patch(string mail, GroupSettings item)
+        public GroupSettings Patch(string mail, GroupSettings item)
         {
-            if (mail.IndexOf("@", StringComparison.Ordinal) < 1)
-            {
-                throw new ArgumentException("The group key must be the group email address");
-            }
+            mail.ThrowIfNotEmailAddress();
 
-            using (PoolItem<GroupssettingsService> connection = ConnectionPools.GroupSettingServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<GroupssettingsService> connection = this.groupSettingsServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupSettingsPatchRequest request = new GroupSettingsPatchRequest(connection.Item, item, mail);
                 return request.ExecuteWithBackoff();

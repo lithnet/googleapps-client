@@ -1,23 +1,60 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using Google.Apis.Admin.Directory.directory_v1;
+using Google.Apis.Calendar.v3;
+using Google.Apis.Gmail.v1;
+using Google.Apis.Groupssettings.v1;
+using Google.GData.Contacts;
 
 namespace Lithnet.GoogleApps
 {
-    internal static class RateLimiter
+    internal class RateLimiter
     {
         private static Dictionary<string, TokenBucket> buckets;
 
         private static Dictionary<string, SemaphoreSlim> semaphores;
-
+        
         static RateLimiter()
         {
             buckets = new Dictionary<string, TokenBucket>();
             semaphores = new Dictionary<string, SemaphoreSlim>();
+            SetDefaultRateLimits();
+        }
+
+        public static void SetRateLimitDirectoryService(int requestsPerInterval, TimeSpan interval)
+        {
+            RateLimiter.SetRateLimit(new DirectoryService().Name, requestsPerInterval, interval);
+        }
+
+        public static void SetRateLimitCalendarService(int requestsPerInterval, TimeSpan interval)
+        {
+            RateLimiter.SetRateLimit(new CalendarService().Name, requestsPerInterval, interval);
+        }
+
+        public static void SetRateLimitGroupSettingsService(int requestsPerInterval, TimeSpan interval)
+        {
+            RateLimiter.SetRateLimit(new GroupssettingsService().Name, requestsPerInterval, interval);
+        }
+
+        public static void SetRateLimitContactsService(int requestsPerInterval, TimeSpan interval)
+        {
+            RateLimiter.SetRateLimit(typeof(ContactsService).Name, requestsPerInterval, interval);
+        }
+
+        public static void SetRateLimitGmailService(int requestsPerInterval, TimeSpan interval)
+        {
+            RateLimiter.SetRateLimit(new GmailService().Name, requestsPerInterval, interval);
+        }
+
+        private static void SetDefaultRateLimits()
+        {
+            RateLimiter.SetRateLimit(new DirectoryService().Name, 1500, new TimeSpan(0, 0, 100));
+            RateLimiter.SetRateLimit(new GroupssettingsService().Name, 500, new TimeSpan(0, 0, 100));
+            RateLimiter.SetRateLimit(new CalendarService().Name, 1500, new TimeSpan(0, 0, 100));
+            RateLimiter.SetRateLimit(new GmailService().Name, 250, new TimeSpan(0, 0, 1));
+            RateLimiter.SetRateLimit(typeof(ContactsService).Name, 1500, new TimeSpan(0, 0, 100));
         }
 
         internal static TokenBucket GetOrCreateBucket(string name)
@@ -30,7 +67,7 @@ namespace Lithnet.GoogleApps
             return RateLimiter.buckets[name];
         }
 
-        internal static void SetRateLimit(string serviceName, int requestsPerInterval, TimeSpan refillInterval)
+        private static void SetRateLimit(string serviceName, int requestsPerInterval, TimeSpan refillInterval)
         {
             if (!RateLimiter.buckets.ContainsKey(serviceName))
             {

@@ -12,17 +12,17 @@ namespace Lithnet.GoogleApps
     {
         private long availableTokens;
 
-        private object consumerLock;
+        private readonly object consumerLock;
 
-        private object refillLock;
+        private readonly object refillLock;
 
         private long nextRefillTicks;
 
         private TimeSpan refillInterval;
 
-        private long refillQuantity;
+        private readonly long refillQuantity;
 
-        private string name;
+        private readonly string name;
 
         public long Capacity { get; }
 

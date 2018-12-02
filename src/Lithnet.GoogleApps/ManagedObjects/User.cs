@@ -10,6 +10,7 @@
     using System.Text;
     using System.Security;
 
+    [Serializable]
     public class User : IDirectResponseSchema, ISerializable
     {
         public List<Address> Addresses { get; set; }

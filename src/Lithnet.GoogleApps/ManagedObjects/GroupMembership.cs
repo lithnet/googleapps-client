@@ -123,11 +123,11 @@ namespace Lithnet.GoogleApps.ManagedObjects
             return members;
         }
 
-        public static void GetInternalDomains(string customerID)
+        public static void GetInternalDomains(DomainsRequestFactory factory, string customerID)
         {
             GroupMembership.internalDomains = new List<string>();
 
-            foreach (Domain domain in DomainsRequestFactory.List(customerID).Domains)
+            foreach (Domain domain in factory.List(customerID).Domains)
             {
                 GroupMembership.internalDomains.Add(domain.DomainName);
 

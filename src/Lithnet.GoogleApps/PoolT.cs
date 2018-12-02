@@ -4,19 +4,17 @@ using System.Collections.Concurrent;
 
 namespace Lithnet.GoogleApps
 {
-    public class Pool<T> : IDisposable 
+    public class Pool<T> : IDisposable
     {
         public int PoolEmptySleepInterval { get; set; }
 
-        private bool isDisposed;
-
-        private ConcurrentBag<PoolItem<T>> items;
+        private readonly ConcurrentBag<PoolItem<T>> items;
 
         private int created;
 
-        private int poolSize;
+        private readonly int poolSize;
 
-        private Func<T> itemFactory;
+        private readonly Func<T> itemFactory;
 
         public Pool(int poolSize, Func<T> itemFactory)
         {
@@ -25,12 +23,7 @@ namespace Lithnet.GoogleApps
                 throw new ArgumentOutOfRangeException(nameof(poolSize), poolSize, "Pool size must be greater than zero");
             }
 
-            if (itemFactory == null)
-            {
-                throw new ArgumentNullException(nameof(itemFactory));
-            }
-
-            this.itemFactory = itemFactory;
+            this.itemFactory = itemFactory ?? throw new ArgumentNullException(nameof(itemFactory));
             this.poolSize = poolSize;
             this.PoolEmptySleepInterval = 100;
             this.items = new ConcurrentBag<PoolItem<T>>();
@@ -40,9 +33,7 @@ namespace Lithnet.GoogleApps
         {
             while (true)
             {
-                PoolItem<T> item;
-
-                if (!this.items.TryTake(out item))
+                if (!this.items.TryTake(out PoolItem<T> item))
                 {
                     if (this.created < this.poolSize)
                     {
@@ -68,18 +59,16 @@ namespace Lithnet.GoogleApps
 
         public void Dispose()
         {
-            if (this.isDisposed)
+            if (this.IsDisposed)
             {
                 return;
             }
 
-            this.isDisposed = true;
+            this.IsDisposed = true;
 
             if (typeof(IDisposable).IsAssignableFrom(typeof(T)))
             {
-                PoolItem<T> item;
-
-                while (this.items.TryTake(out item))
+                while (this.items.TryTake(out PoolItem<T> item))
                 {
                     item.Dispose();
                 }
@@ -98,6 +87,6 @@ namespace Lithnet.GoogleApps
 
         public int AvailableCount => this.items.Count;
 
-        public bool IsDisposed => this.isDisposed;
+        public bool IsDisposed { get; private set; }
     }
 }

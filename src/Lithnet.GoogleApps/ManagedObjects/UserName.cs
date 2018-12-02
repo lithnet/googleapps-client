@@ -51,8 +51,8 @@
 
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("familyName", this.FamilyName);
             info.AddValue("givenName", this.GivenName);
+            info.AddValue("familyName", this.FamilyName);
             info.AddValue("fullName", string.Format("{0} {1}", this.GivenName, this.FamilyName));
         }
 

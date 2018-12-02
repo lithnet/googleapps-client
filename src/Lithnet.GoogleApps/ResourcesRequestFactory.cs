@@ -1,30 +1,66 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using Lithnet.GoogleApps.Api;
-using Lithnet.GoogleApps.ManagedObjects;
 using Newtonsoft.Json;
 using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Admin.Directory.directory_v1.Data;
-using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
+using Google.Apis.Http;
+using Google.Apis.Services;
 
 namespace Lithnet.GoogleApps
 {
-    public static class ResourceRequestFactory
+    public class ResourceRequestFactory
     {
-        public static IEnumerable<CalendarResource> GetCalendars(string customerID)
+        private readonly BaseClientServicePool<DirectoryService> directoryServicePool;
+
+        private readonly BaseClientServicePool<CalendarService> calendarServicePool;
+
+        public ResourceRequestFactory(GoogleServiceCredentials creds, string[] resourceServiceScopes, string[] calendarServiceScopes, int resourceServicePoolSize, int calendarServicePoolSize)
         {
-            return ResourceRequestFactory.GetCalendars(customerID, null);
+            this.directoryServicePool = new BaseClientServicePool<DirectoryService>(resourceServicePoolSize, () =>
+            {
+                DirectoryService x = new DirectoryService(new BaseClientService.Initializer()
+                {
+                    HttpClientInitializer = new ServiceAccountCredential(creds.GetInitializer(resourceServiceScopes)),
+                    ApplicationName = "LithnetGoogleAppsLibrary",
+                    GZipEnabled = !Settings.DisableGzip,
+                    Serializer = new GoogleJsonSerializer(),
+                    DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
+                });
+
+                x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                return x;
+            });
+            
+            this.calendarServicePool = new BaseClientServicePool<CalendarService>(calendarServicePoolSize, () =>
+            {
+                CalendarService x = new CalendarService(
+                    new BaseClientService.Initializer()
+                    {
+                        HttpClientInitializer = new ServiceAccountCredential(creds.GetInitializer(calendarServiceScopes)),
+                        ApplicationName = "LithnetGoogleAppsLibrary",
+                        GZipEnabled = !Settings.DisableGzip,
+                        Serializer = new GoogleJsonSerializer(),
+                        DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
+                    });
+
+                x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                return x;
+            });
         }
 
-        public static IEnumerable<CalendarResource> GetCalendars(string customerID, string fields)
+        public IEnumerable<CalendarResource> GetCalendars(string customerID)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            return this.GetCalendars(customerID, null);
+        }
+
+        public IEnumerable<CalendarResource> GetCalendars(string customerID, string fields)
+        {
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
 
@@ -60,23 +96,23 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static void DeleteCalendar(string customerId, string id)
+        public void DeleteCalendar(string customerId, string id)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.CalendarsResource.DeleteRequest request = new ResourcesResource.CalendarsResource.DeleteRequest(connection.Item, customerId, id);
                 request.ExecuteWithBackoff();
             }
         }
 
-        public static CalendarResource GetCalendar(string customerId, string id)
+        public CalendarResource GetCalendar(string customerId, string id)
         {
-            return ResourceRequestFactory.GetCalendar(customerId, id, null);
+            return this.GetCalendar(customerId, id, null);
         }
 
-        public static CalendarResource GetCalendar(string customerId, string id, string fields)
+        public CalendarResource GetCalendar(string customerId, string id, string fields)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.CalendarsResource.GetRequest request = new ResourcesResource.CalendarsResource.GetRequest(connection.Item, customerId, id);
 
@@ -86,14 +122,14 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static IEnumerable<AclRule> GetCalendarAclRules(string customerId, string calendarId)
+        public IEnumerable<AclRule> GetCalendarAclRules(string customerId, string calendarId)
         {
-            return ResourceRequestFactory.GetCalendarAclRules(customerId, calendarId, null);
+            return this.GetCalendarAclRules(customerId, calendarId, null);
         }
 
-        public static IEnumerable<AclRule> GetCalendarAclRules(string customerId, string calendarId, string fields)
+        public IEnumerable<AclRule> GetCalendarAclRules(string customerId, string calendarId, string fields)
         {
-            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<CalendarService> connection = this.calendarServicePool.Take(NullValueHandling.Ignore))
             {
                 AclResource.ListRequest request = new AclResource.ListRequest(connection.Item, calendarId);
                 string token = null;
@@ -147,27 +183,27 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static void GetCalendarAclRule(string customerId, string calendarId, string ruleId)
+        public void GetCalendarAclRule(string customerId, string calendarId, string ruleId)
         {
-            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<CalendarService> connection = this.calendarServicePool.Take(NullValueHandling.Ignore))
             {
                 AclResource.GetRequest request = new AclResource.GetRequest(connection.Item, calendarId, ruleId);
                 request.ExecuteWithBackoff();
             }
         }
 
-        public static void DeleteCalendarAclRule(string customerId, string calendarId, string ruleId)
+        public void DeleteCalendarAclRule(string customerId, string calendarId, string ruleId)
         {
-            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<CalendarService> connection = this.calendarServicePool.Take(NullValueHandling.Ignore))
             {
                 AclResource.DeleteRequest request = new AclResource.DeleteRequest(connection.Item, calendarId, ruleId);
                 request.ExecuteWithBackoff();
             }
         }
 
-        public static void AddCalendarAclRule(string customerId, string calendarId, AclRule body, bool sendNotifications)
+        public void AddCalendarAclRule(string customerId, string calendarId, AclRule body, bool sendNotifications)
         {
-            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<CalendarService> connection = this.calendarServicePool.Take(NullValueHandling.Ignore))
             {
                 AclResource.InsertRequest request = new AclResource.InsertRequest(connection.Item, body, calendarId);
                 request.SendNotifications = sendNotifications;
@@ -175,9 +211,9 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static void UpdateCalendarAclRule(string customerId, string calendarId, string ruleId, AclRule body, bool sendNotifications)
+        public void UpdateCalendarAclRule(string customerId, string calendarId, string ruleId, AclRule body, bool sendNotifications)
         {
-            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<CalendarService> connection = this.calendarServicePool.Take(NullValueHandling.Ignore))
             {
                 AclResource.UpdateRequest request = new AclResource.UpdateRequest(connection.Item, body, calendarId, ruleId);
                 request.SendNotifications = sendNotifications;
@@ -185,9 +221,9 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static void PatchCalendarAclRule(string customerId, string calendarId, string ruleId, AclRule body, bool sendNotifications)
+        public void PatchCalendarAclRule(string customerId, string calendarId, string ruleId, AclRule body, bool sendNotifications)
         {
-            using (PoolItem<CalendarService> connection = ConnectionPools.CalendarServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<CalendarService> connection = this.calendarServicePool.Take(NullValueHandling.Ignore))
             {
                 AclResource.PatchRequest request = new AclResource.PatchRequest(connection.Item, body, calendarId, ruleId);
                 request.SendNotifications = sendNotifications;
@@ -195,41 +231,41 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static CalendarResource AddCalendar(string customerId, CalendarResource item)
+        public CalendarResource AddCalendar(string customerId, CalendarResource item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.CalendarsResource.InsertRequest request = new ResourcesResource.CalendarsResource.InsertRequest(connection.Item, item, customerId);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static CalendarResource PatchCalendar(string customerId, string id, CalendarResource item)
+        public CalendarResource PatchCalendar(string customerId, string id, CalendarResource item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.CalendarsResource.PatchRequest request = new ResourcesResource.CalendarsResource.PatchRequest(connection.Item, item, customerId, id);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static CalendarResource UpdateCalendar(string customerId, string id, CalendarResource item)
+        public CalendarResource UpdateCalendar(string customerId, string id, CalendarResource item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Include))
             {
                 ResourcesResource.CalendarsResource.UpdateRequest request = new ResourcesResource.CalendarsResource.UpdateRequest(connection.Item, item, customerId, id);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static IEnumerable<Building> GetBuildings(string customerID)
+        public IEnumerable<Building> GetBuildings(string customerID)
         {
-            return ResourceRequestFactory.GetBuildings(customerID, null);
+            return this.GetBuildings(customerID, null);
         }
 
-        public static IEnumerable<Building> GetBuildings(string customerID, string fields)
+        public IEnumerable<Building> GetBuildings(string customerID, string fields)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
 
@@ -262,23 +298,23 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static void DeleteBuilding(string customerId, string id)
+        public void DeleteBuilding(string customerId, string id)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.BuildingsResource.DeleteRequest request = new ResourcesResource.BuildingsResource.DeleteRequest(connection.Item, customerId, id);
                 request.ExecuteWithBackoff();
             }
         }
 
-        public static Building GetBuilding(string customerId, string id)
+        public Building GetBuilding(string customerId, string id)
         {
-            return ResourceRequestFactory.GetBuilding(customerId, id, null);
+            return this.GetBuilding(customerId, id, null);
         }
 
-        public static Building GetBuilding(string customerId, string id, string fields)
+        public Building GetBuilding(string customerId, string id, string fields)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.BuildingsResource.GetRequest request = new ResourcesResource.BuildingsResource.GetRequest(connection.Item, customerId, id);
 
@@ -288,27 +324,27 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static Building AddBuilding(string customerId, Building item)
+        public Building AddBuilding(string customerId, Building item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.BuildingsResource.InsertRequest request = new ResourcesResource.BuildingsResource.InsertRequest(connection.Item, item, customerId);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static Building PatchBuilding(string customerId, string id, Building item)
+        public Building PatchBuilding(string customerId, string id, Building item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.BuildingsResource.PatchRequest request = new ResourcesResource.BuildingsResource.PatchRequest(connection.Item, item, customerId, id);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static Building UpdateBuilding(string customerId, string id, Building item)
+        public Building UpdateBuilding(string customerId, string id, Building item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Include))
             {
                 ResourcesResource.BuildingsResource.UpdateRequest request = new ResourcesResource.BuildingsResource.UpdateRequest(connection.Item, item, customerId, id);
                 return request.ExecuteWithBackoff();
@@ -316,14 +352,14 @@ namespace Lithnet.GoogleApps
         }
 
 
-        public static IEnumerable<Feature> GetFeatures(string customerID)
+        public IEnumerable<Feature> GetFeatures(string customerID)
         {
-            return ResourceRequestFactory.GetFeatures(customerID, null);
+            return this.GetFeatures(customerID, null);
         }
 
-        public static IEnumerable<Feature> GetFeatures(string customerID, string fields)
+        public IEnumerable<Feature> GetFeatures(string customerID, string fields)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
 
@@ -356,23 +392,23 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static void DeleteFeature(string customerId, string id)
+        public void DeleteFeature(string customerId, string id)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.FeaturesResource.DeleteRequest request = new ResourcesResource.FeaturesResource.DeleteRequest(connection.Item, customerId, id);
                 request.ExecuteWithBackoff();
             }
         }
 
-        public static Feature GetFeature(string customerId, string id)
+        public Feature GetFeature(string customerId, string id)
         {
-            return ResourceRequestFactory.GetFeature(customerId, id, null);
+            return this.GetFeature(customerId, id, null);
         }
 
-        public static Feature GetFeature(string customerId, string id, string fields)
+        public Feature GetFeature(string customerId, string id, string fields)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.FeaturesResource.GetRequest request = new ResourcesResource.FeaturesResource.GetRequest(connection.Item, customerId, id);
 
@@ -382,27 +418,27 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static Feature AddFeature(string customerId, Feature item)
+        public Feature AddFeature(string customerId, Feature item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.FeaturesResource.InsertRequest request = new ResourcesResource.FeaturesResource.InsertRequest(connection.Item, item, customerId);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static Feature PatchFeature(string customerId, string id, Feature item)
+        public Feature PatchFeature(string customerId, string id, Feature item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.FeaturesResource.PatchRequest request = new ResourcesResource.FeaturesResource.PatchRequest(connection.Item, item, customerId, id);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static Feature UpdateFeature(string customerId, string id, Feature item)
+        public Feature UpdateFeature(string customerId, string id, Feature item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Include))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Include))
             {
                 ResourcesResource.FeaturesResource.UpdateRequest request = new ResourcesResource.FeaturesResource.UpdateRequest(connection.Item, item, customerId, id);
                 return request.ExecuteWithBackoff();

@@ -12,33 +12,27 @@ namespace Lithnet.GoogleApps
 {
     public static class ApiExtensions
     {
-        private static int backoffRetryCount = 0;
+        private static int backoffRetryCount = 8;
 
         private static Random randomNumberGenerator = new Random();
 
         public static int BackoffRetryCount
         {
-            get
-            {
-                return ApiExtensions.backoffRetryCount;
-            }
-            set
-            {
-                ApiExtensions.backoffRetryCount = value;
-            }
-        }
-
-        public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request)
-        {
-            return request.ExecuteWithBackoff(8);
+            get => ApiExtensions.backoffRetryCount;
+            set => ApiExtensions.backoffRetryCount = value;
         }
 
         public static void ExecuteWithBackoff(this BatchRequest request, string serviceName)
         {
-            request.ExecuteWithBackoff(serviceName, 8);
+            request.ExecuteWithBackoff(serviceName, ApiExtensions.BackoffRetryCount);
         }
 
         public static void ExecuteWithBackoff(this BatchRequest request, string serviceName, int retryAttempts)
+        {
+            request.ExecuteWithBackoff(serviceName, retryAttempts, 1);
+        }
+
+        public static void ExecuteWithBackoff(this BatchRequest request, string serviceName, int retryAttempts, int consumeTokens)
         {
             int attemptCount = 0;
 
@@ -48,7 +42,7 @@ namespace Lithnet.GoogleApps
                 {
                     attemptCount++;
 
-                    RateLimiter.GetOrCreateBucket(serviceName).Consume(request.Count);
+                    RateLimiter.GetOrCreateBucket(serviceName).Consume(request.Count * consumeTokens);
 
                     request.ExecuteAsync().Wait();
                     break;
@@ -69,10 +63,26 @@ namespace Lithnet.GoogleApps
             }
         }
 
+        public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request)
+        {
+            return request.ExecuteWithBackoff(ApiExtensions.BackoffRetryCount, 1);
+        }
 
         public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request, int retryAttempts)
         {
+            return request.ExecuteWithBackoff(retryAttempts, 1);
+        }
+
+        public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request, int retryAttempts, int consumeTokens)
+        {
             int attemptCount = 0;
+
+            if (retryAttempts < 0)
+            {
+                retryAttempts = Math.Max(0, backoffRetryCount);
+            }
+
+            consumeTokens = Math.Max(1, consumeTokens);
 
             while (true)
             {
@@ -80,8 +90,7 @@ namespace Lithnet.GoogleApps
                 {
                     attemptCount++;
 
-                    RateLimiter.GetOrCreateBucket(request.Service.Name).Consume();
-
+                    RateLimiter.GetOrCreateBucket(request.Service.Name).Consume(consumeTokens);
                     return request.Execute();
                 }
                 catch (Google.GoogleApiException ex)
@@ -108,7 +117,7 @@ namespace Lithnet.GoogleApps
             {
                 case HttpStatusCode.InternalServerError:
                 case HttpStatusCode.ServiceUnavailable:
-                case (HttpStatusCode) 429:
+                case (HttpStatusCode)429:
                     return true;
 
                 case HttpStatusCode.Forbidden:
@@ -139,7 +148,7 @@ namespace Lithnet.GoogleApps
             return s == null || s == Constants.NullValuePlaceholder;
         }
 
-        public static T ExecuteWithRetryOnNotFound<T>(this Func<T> t)
+        public static T ExecuteWithRetryOnNotFound<T>(this Func<T> t, int sleepInterval = 1000)
         {
             try
             {
@@ -149,8 +158,9 @@ namespace Lithnet.GoogleApps
             {
                 if (ex.HttpStatusCode == HttpStatusCode.NotFound)
                 {
+                    Trace.WriteLine($"Object was not found. Sleeping {sleepInterval} milliseconds before retrying");
                     //Newly created object was not ready. Sleeping 1 second
-                    Thread.Sleep(1000);
+                    Thread.Sleep(sleepInterval);
                     return t.Invoke();
                 }
 
@@ -158,7 +168,7 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static void ExecuteWithRetryOnNotFound(this Action t)
+        public static void ExecuteWithRetryOnNotFound(this Action t, int sleepInterval = 1000)
         {
             try
             {
@@ -168,13 +178,26 @@ namespace Lithnet.GoogleApps
             {
                 if (ex.HttpStatusCode == HttpStatusCode.NotFound)
                 {
+                    Trace.WriteLine($"Object was not found. Sleeping {sleepInterval} milliseconds before retrying");
                     //Newly created object was not ready. Sleeping 1 second
-                    Thread.Sleep(1000);
+                    Thread.Sleep(sleepInterval);
                     t.Invoke();
                 }
 
                 throw;
             }
+        }
+
+        public static T InvokeWithRateLimit<T>(this Func<T> t, string bucketName, int consumeTokens = 1)
+        {
+            RateLimiter.GetOrCreateBucket(bucketName).Consume(consumeTokens);
+            return t.Invoke();
+        }
+
+        public static void InvokeWithRateLimit(this Action t, string bucketName, int consumeTokens = 1)
+        {
+            RateLimiter.GetOrCreateBucket(bucketName).Consume(consumeTokens);
+            t.Invoke();
         }
 
         public static string ConvertToUnsecureString(this SecureString securePassword)
@@ -215,6 +238,14 @@ namespace Lithnet.GoogleApps
             if (batch.Any())
             {
                 yield return batch;
+            }
+        }
+
+        public static void ThrowIfNotEmailAddress(this string email)
+        {
+            if (email.IndexOf("@", StringComparison.Ordinal) < 0)
+            {
+                throw new ArgumentException("Mail argument must be a valid email address");
             }
         }
     }

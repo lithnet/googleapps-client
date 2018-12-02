@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
 using Google;
 using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Admin.Directory.directory_v1.Data;
@@ -14,20 +12,40 @@ using Lithnet.GoogleApps.ManagedObjects;
 
 namespace Lithnet.GoogleApps
 {
-    public static class GroupMemberRequestFactory
+    public class GroupMemberRequestFactory
     {
-        internal static string ServiceName = "GroupMemberRequestFactory";
+        private static string limiterName = "concurrent-group-member-requests";
 
         // Batch size can technically be up to 1000, but a google API error is returned with requests that seem to take more than 5.5 minutes
         // 500 works, but can timeout on the client side, unless the default HttpClient timeout is raised from the default of 100 seconds
         // @ 250 we seem to get comparable updated objects/sec as at batch sizes of 500 and 750.
         public static int BatchSize { get; set; } = 100;
 
-        public static GroupMembership GetMembership(string groupKey)
+        public static int ConcurrentOperationLimitDefault { get; set; } = 100;
+
+        private readonly BaseClientServicePool<DirectoryService> directoryServicePool;
+
+        internal GroupMemberRequestFactory(BaseClientServicePool<DirectoryService> directoryServicePool)
+        {
+            this.directoryServicePool = directoryServicePool;
+            RateLimiter.SetConcurrentLimit(GroupMemberRequestFactory.limiterName, GroupMemberRequestFactory.ConcurrentOperationLimitDefault);
+        }
+
+        private void WaitForGate()
+        {
+            RateLimiter.WaitForGate(GroupMemberRequestFactory.limiterName);
+        }
+
+        private void ReleaseGate()
+        {
+            RateLimiter.ReleaseGate(GroupMemberRequestFactory.limiterName);
+        }
+
+        public GroupMembership GetMembership(string groupKey)
         {
             GroupMembership membership = new GroupMembership();
 
-            using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> poolService = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 string token = null;
                 MembersResource.ListRequest request = poolService.Item.Members.List(groupKey);
@@ -41,12 +59,12 @@ namespace Lithnet.GoogleApps
 
                     try
                     {
-                        GroupMemberRequestFactory.WaitForGate();
+                        this.WaitForGate();
                         members = request.ExecuteWithBackoff();
                     }
                     finally
                     {
-                        GroupMemberRequestFactory.ReleaseGate();
+                        this.ReleaseGate();
                     }
 
                     if (members.MembersValue != null)
@@ -69,22 +87,12 @@ namespace Lithnet.GoogleApps
             return membership;
         }
 
-        private static void WaitForGate()
+        public void AddMember(string groupID, string memberID, string role)
         {
-            RateLimiter.WaitForGate(GroupMemberRequestFactory.ServiceName);
+            this.AddMember(groupID, memberID, role, true);
         }
 
-        private static void ReleaseGate()
-        {
-            RateLimiter.ReleaseGate(GroupMemberRequestFactory.ServiceName);
-        }
-
-        public static void AddMember(string groupID, string memberID, string role)
-        {
-            GroupMemberRequestFactory.AddMember(groupID, memberID, role, true);
-        }
-
-        public static void AddMember(string groupID, string memberID, string role, bool throwOnExistingMember)
+        public void AddMember(string groupID, string memberID, string role, bool throwOnExistingMember)
         {
             Member member = new Member();
 
@@ -99,21 +107,21 @@ namespace Lithnet.GoogleApps
 
             member.Role = role ?? "MEMBER";
 
-            AddMember(groupID, member, throwOnExistingMember);
+            this.AddMember(groupID, member, throwOnExistingMember);
         }
 
-        public static void AddMember(string groupID, Member item)
+        public void AddMember(string groupID, Member item)
         {
-            GroupMemberRequestFactory.AddMember(groupID, item, true);
+            this.AddMember(groupID, item, true);
         }
 
-        public static void AddMember(string groupID, Member item, bool throwOnExistingMember)
+        public void AddMember(string groupID, Member item, bool throwOnExistingMember)
         {
             try
             {
-                GroupMemberRequestFactory.WaitForGate();
+                this.WaitForGate();
 
-                using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (PoolItem<DirectoryService> poolService = this.directoryServicePool.Take(NullValueHandling.Ignore))
                 {
                     MembersResource.InsertRequest request = poolService.Item.Members.Insert(item, groupID);
                     Trace.WriteLine($"Adding member {item.Email ?? item.Id} as {item.Role} to group {groupID}");
@@ -122,7 +130,7 @@ namespace Lithnet.GoogleApps
             }
             catch (GoogleApiException e)
             {
-                if (!throwOnExistingMember && GroupMemberRequestFactory.IsExistingMemberError(e.HttpStatusCode, e.Message))
+                if (!throwOnExistingMember && this.IsExistingMemberError(e.HttpStatusCode, e.Message))
                 {
                     return;
                 }
@@ -131,17 +139,17 @@ namespace Lithnet.GoogleApps
             }
             finally
             {
-                GroupMemberRequestFactory.ReleaseGate();
+                this.ReleaseGate();
             }
         }
 
-        public static void ChangeMemberRole(string groupID, Member item)
+        public void ChangeMemberRole(string groupID, Member item)
         {
             try
             {
-                GroupMemberRequestFactory.WaitForGate();
+                this.WaitForGate();
 
-                using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (PoolItem<DirectoryService> poolService = this.directoryServicePool.Take(NullValueHandling.Ignore))
                 {
                     MembersResource.PatchRequest request = poolService.Item.Members.Patch(item, groupID, item.Email);
                     Trace.WriteLine($"Changing member {item.Email ?? item.Id} role to {item.Role} in group {groupID}");
@@ -150,22 +158,22 @@ namespace Lithnet.GoogleApps
             }
             finally
             {
-                GroupMemberRequestFactory.ReleaseGate();
+                this.ReleaseGate();
             }
         }
 
-        public static void RemoveMember(string groupID, string memberID)
+        public void RemoveMember(string groupID, string memberID)
         {
-            GroupMemberRequestFactory.RemoveMember(groupID, memberID, true);
+            this.RemoveMember(groupID, memberID, true);
         }
 
-        public static void RemoveMember(string groupID, string memberID, bool throwOnMissingMember)
+        public void RemoveMember(string groupID, string memberID, bool throwOnMissingMember)
         {
             try
             {
-                GroupMemberRequestFactory.WaitForGate();
+                this.WaitForGate();
 
-                using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (PoolItem<DirectoryService> poolService = this.directoryServicePool.Take(NullValueHandling.Ignore))
                 {
                     MembersResource.DeleteRequest request = poolService.Item.Members.Delete(groupID, memberID);
                     Trace.WriteLine($"Removing member {memberID} from group {groupID}");
@@ -175,7 +183,7 @@ namespace Lithnet.GoogleApps
                     }
                     catch (GoogleApiException e)
                     {
-                        if (!throwOnMissingMember && GroupMemberRequestFactory.IsMissingMemberError(e.HttpStatusCode, e.Message))
+                        if (!throwOnMissingMember && this.IsMissingMemberError(e.HttpStatusCode, e.Message))
                         {
                             return;
                         }
@@ -186,17 +194,17 @@ namespace Lithnet.GoogleApps
             }
             finally
             {
-                GroupMemberRequestFactory.ReleaseGate();
+                this.ReleaseGate();
             }
         }
 
-        public static void AddMembers(string id, IList<Member> members, bool throwOnExistingMember)
+        public void AddMembers(string id, IList<Member> members, bool throwOnExistingMember)
         {
             if (GroupMemberRequestFactory.BatchSize <= 1)
             {
                 foreach (Member member in members)
                 {
-                    GroupMemberRequestFactory.AddMember(id, member, throwOnExistingMember);
+                    this.AddMember(id, member, throwOnExistingMember);
                 }
 
                 return;
@@ -204,9 +212,9 @@ namespace Lithnet.GoogleApps
 
             try
             {
-                GroupMemberRequestFactory.WaitForGate();
+                this.WaitForGate();
 
-                using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (PoolItem<DirectoryService> poolService = this.directoryServicePool.Take(NullValueHandling.Ignore))
                 {
                     List<ClientServiceRequest<Member>> requests = new List<ClientServiceRequest<Member>>();
 
@@ -216,16 +224,16 @@ namespace Lithnet.GoogleApps
                         requests.Add(poolService.Item.Members.Insert(member, id));
                     }
 
-                    GroupMemberRequestFactory.ProcessBatches(id, members, !throwOnExistingMember, false, requests, poolService);
+                    this.ProcessBatches(id, members, !throwOnExistingMember, false, requests, poolService);
                 }
             }
             finally
             {
-                GroupMemberRequestFactory.ReleaseGate();
+                this.ReleaseGate();
             }
         }
 
-        private static void ProcessBatches<T>(string id, IList<T> members, bool ignoreExistingMember, bool ignoreMissingMember, IList<ClientServiceRequest<T>> requests, PoolItem<DirectoryService> poolService)
+        private void ProcessBatches<T>(string id, IList<T> members, bool ignoreExistingMember, bool ignoreMissingMember, IList<ClientServiceRequest<T>> requests, PoolItem<DirectoryService> poolService)
         {
             List<string> failedMembers = new List<string>();
             List<Exception> failures = new List<Exception>();
@@ -245,7 +253,7 @@ namespace Lithnet.GoogleApps
                         (content, error, i, message) =>
                         {
                             int index = baseCount + i;
-                            GroupMemberRequestFactory.ProcessMemberResponse(id, members[index], ignoreExistingMember, ignoreMissingMember, error, message, requestsToRetry, request, failedMembers, failures);
+                            this.ProcessMemberResponse(id, members[index], ignoreExistingMember, ignoreMissingMember, error, message, requestsToRetry, request, failedMembers, failures);
                         });
                 }
 
@@ -267,9 +275,9 @@ namespace Lithnet.GoogleApps
                 }
                 catch (GoogleApiException e)
                 {
-                    if (!(ignoreMissingMember && GroupMemberRequestFactory.IsMissingMemberError(e.HttpStatusCode, e.Message)))
+                    if (!(ignoreMissingMember && this.IsMissingMemberError(e.HttpStatusCode, e.Message)))
                     {
-                        if (!(ignoreExistingMember && GroupMemberRequestFactory.IsExistingMemberError(e.HttpStatusCode, e.Message)))
+                        if (!(ignoreExistingMember && this.IsExistingMemberError(e.HttpStatusCode, e.Message)))
                         {
                             failures.Add(e);
                             failedMembers.Add(request.Key);
@@ -293,7 +301,7 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        private static void ProcessMemberResponse<T>(string id, T item, bool ignoreExistingMember, bool ignoreMissingMember, RequestError error, HttpResponseMessage message, Dictionary<string, ClientServiceRequest<T>> requestsToRetry, ClientServiceRequest<T> request, List<string> failedMembers, List<Exception> failures)
+        private void ProcessMemberResponse<T>(string id, T item, bool ignoreExistingMember, bool ignoreMissingMember, RequestError error, HttpResponseMessage message, Dictionary<string, ClientServiceRequest<T>> requestsToRetry, ClientServiceRequest<T> request, List<string> failedMembers, List<Exception> failures)
         {
             string memberKey;
             string memberRole = string.Empty;
@@ -321,12 +329,12 @@ namespace Lithnet.GoogleApps
 
             Trace.WriteLine($"{requestType}: Failed: Member: {memberKey}, Role: {memberRole}, Group: {id}\n{error}");
 
-            if (ignoreExistingMember && GroupMemberRequestFactory.IsExistingMemberError(message.StatusCode, errorString))
+            if (ignoreExistingMember && this.IsExistingMemberError(message.StatusCode, errorString))
             {
                 return;
             }
 
-            if (ignoreMissingMember && GroupMemberRequestFactory.IsMissingMemberError(message.StatusCode, errorString))
+            if (ignoreMissingMember && this.IsMissingMemberError(message.StatusCode, errorString))
             {
                 return;
             }
@@ -344,13 +352,13 @@ namespace Lithnet.GoogleApps
             failures.Add(ex);
         }
 
-        public static void RemoveMembers(string id, IList<string> members, bool throwOnMissingMember)
+        public void RemoveMembers(string id, IList<string> members, bool throwOnMissingMember)
         {
             if (GroupMemberRequestFactory.BatchSize <= 1)
             {
                 foreach (string member in members)
                 {
-                    GroupMemberRequestFactory.RemoveMember(id, member, throwOnMissingMember);
+                    this.RemoveMember(id, member, throwOnMissingMember);
                 }
 
                 return;
@@ -358,9 +366,9 @@ namespace Lithnet.GoogleApps
 
             try
             {
-                GroupMemberRequestFactory.WaitForGate();
+                this.WaitForGate();
 
-                using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (PoolItem<DirectoryService> poolService = this.directoryServicePool.Take(NullValueHandling.Ignore))
                 {
                     List<ClientServiceRequest<string>> requests = new List<ClientServiceRequest<string>>();
 
@@ -370,22 +378,22 @@ namespace Lithnet.GoogleApps
                         requests.Add(poolService.Item.Members.Delete(id, member));
                     }
 
-                    GroupMemberRequestFactory.ProcessBatches(id, members, false, !throwOnMissingMember, requests, poolService);
+                    this.ProcessBatches(id, members, false, !throwOnMissingMember, requests, poolService);
                 }
             }
             finally
             {
-                GroupMemberRequestFactory.ReleaseGate();
+                this.ReleaseGate();
             }
         }
 
-        public static void ChangeMemberRoles(string id, IList<Member> members)
+        public void ChangeMemberRoles(string id, IList<Member> members)
         {
             if (GroupMemberRequestFactory.BatchSize <= 1)
             {
                 foreach (Member member in members)
                 {
-                    GroupMemberRequestFactory.ChangeMemberRole(id, member);
+                    this.ChangeMemberRole(id, member);
                 }
 
                 return;
@@ -393,9 +401,9 @@ namespace Lithnet.GoogleApps
 
             try
             {
-                GroupMemberRequestFactory.WaitForGate();
+                this.WaitForGate();
 
-                using (PoolItem<DirectoryService> poolService = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (PoolItem<DirectoryService> poolService = this.directoryServicePool.Take(NullValueHandling.Ignore))
                 {
                     List<ClientServiceRequest<Member>> requests = new List<ClientServiceRequest<Member>>();
 
@@ -407,16 +415,16 @@ namespace Lithnet.GoogleApps
                         requests.Add(poolService.Item.Members.Patch(member, id, memberKey));
                     }
 
-                    GroupMemberRequestFactory.ProcessBatches(id, members, false, false, requests, poolService);
+                    this.ProcessBatches(id, members, false, false, requests, poolService);
                 }
             }
             finally
             {
-                GroupMemberRequestFactory.ReleaseGate();
+                this.ReleaseGate();
             }
         }
 
-        private static bool IsExistingMemberError(HttpStatusCode statusCode, string message)
+        private bool IsExistingMemberError(HttpStatusCode statusCode, string message)
         {
             if (statusCode == HttpStatusCode.Conflict && message.IndexOf("member already exists", StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -426,7 +434,7 @@ namespace Lithnet.GoogleApps
             return false;
         }
 
-        private static bool IsMissingMemberError(HttpStatusCode statusCode, string message)
+        private bool IsMissingMemberError(HttpStatusCode statusCode, string message)
         {
             if (statusCode == HttpStatusCode.NotFound && message.IndexOf("notFound", StringComparison.OrdinalIgnoreCase) >= 0)
             {

@@ -7,7 +7,7 @@ namespace Lithnet.GoogleApps
 {
     public class GoogleJsonSerializer : IJsonSerializer
     {
-        private JsonSerializer newtonsoftSerializer;
+        private readonly JsonSerializer newtonsoftSerializer;
 
         public GoogleJsonSerializer()
         {
@@ -21,14 +21,8 @@ namespace Lithnet.GoogleApps
 
         public NullValueHandling NullValueHandling
         {
-            get
-            {
-                return this.newtonsoftSerializer.NullValueHandling;
-            }
-            set
-            {
-                this.newtonsoftSerializer.NullValueHandling = value;
-            }
+            get => this.newtonsoftSerializer.NullValueHandling;
+            set => this.newtonsoftSerializer.NullValueHandling = value;
         }
 
         public T Deserialize<T>(Stream input)
@@ -57,6 +51,7 @@ namespace Lithnet.GoogleApps
                 {
                     obj = string.Empty;
                 }
+
                 this.newtonsoftSerializer.Serialize(writer, obj);
                 return writer.ToString();
             }
@@ -70,6 +65,7 @@ namespace Lithnet.GoogleApps
                 {
                     obj = string.Empty;
                 }
+
                 this.newtonsoftSerializer.Serialize(writer, obj);
             }
         }

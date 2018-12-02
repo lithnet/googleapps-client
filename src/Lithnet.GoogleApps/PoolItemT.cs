@@ -4,7 +4,7 @@ namespace Lithnet.GoogleApps
 {
     public class PoolItem<T> : IDisposable 
     {
-        private Pool<T> containingPool;
+        private readonly Pool<T> containingPool;
 
         public PoolItem(Pool<T> pool, T item)
         {

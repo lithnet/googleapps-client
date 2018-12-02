@@ -5,32 +5,53 @@ using System.Threading.Tasks;
 using Google.Apis.Admin.Directory.directory_v1.Data;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
+using System.Threading;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Google.Apis.Admin.Directory.directory_v1;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Http;
+using Google.Apis.Services;
 using Group = Google.Apis.Admin.Directory.directory_v1.Data.Group;
 
 namespace Lithnet.GoogleApps
 {
 
-    public static class GroupRequestFactory
+    public class GroupRequestFactory
     {
-        static GroupRequestFactory()
+        private readonly BaseClientServicePool<DirectoryService> directoryServicePool;
+
+        public GroupMemberRequestFactory MemberFactory { get; private set; }
+
+        public GroupSettingsRequestFactory SettingsFactory { get; private set; }
+
+        public GroupRequestFactory(GoogleServiceCredentials creds, string[] groupScopes, string[] groupSettingsScopes, int groupPoolSize, int settingsPoolSize)
         {
-            GroupRequestFactory.MemberThreads = 10;
-            GroupRequestFactory.SettingsThreads = 30;
+            this.directoryServicePool = new BaseClientServicePool<DirectoryService>(groupPoolSize, () =>
+            {
+                DirectoryService x = new DirectoryService(new BaseClientService.Initializer()
+                {
+                    HttpClientInitializer = new ServiceAccountCredential(creds.GetInitializer(groupScopes)),
+                    ApplicationName = "LithnetGoogleAppsLibrary",
+                    GZipEnabled = !Settings.DisableGzip,
+                    Serializer = new GoogleJsonSerializer(),
+                    DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
+                });
+
+                x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                return x;
+            });
+
+            this.MemberFactory = new GroupMemberRequestFactory(this.directoryServicePool);
+            this.SettingsFactory = new GroupSettingsRequestFactory(creds, groupSettingsScopes, settingsPoolSize);
         }
 
-        public static int MemberThreads { get; set; }
-
-        public static int SettingsThreads { get; set; }
-
-        public static IEnumerable<GoogleGroup> GetUserGroups(string userKey, bool getMembers, bool getSettings, string groupFields, string settingsFields, bool excludeUserCreated = false, Regex regexFilter = null)
+        public IEnumerable<GoogleGroup> GetUserGroups(string userKey, bool getMembers, bool getSettings, string groupFields, int memberThreads, int settingsThreads, bool excludeUserCreated = false, Regex regexFilter = null)
         {
             BlockingCollection<GoogleGroup> completedGroups = new BlockingCollection<GoogleGroup>();
 
-            Task t = new Task(() => GroupRequestFactory.PopulateGroups(null, userKey, groupFields, getMembers, getSettings, completedGroups, excludeUserCreated, regexFilter));
+            Task t = new Task(() => this.PopulateGroups(null, userKey, groupFields, getMembers, getSettings, completedGroups, excludeUserCreated, regexFilter, settingsThreads, memberThreads));
             t.Start();
 
             foreach (GoogleGroup group in completedGroups.GetConsumingEnumerable())
@@ -40,11 +61,11 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static IEnumerable<GoogleGroup> GetGroups(string customerID, bool getMembers, bool getSettings, string groupFields, string settingsFields, bool excludeUserCreated = false, Regex regexFilter = null)
+        public IEnumerable<GoogleGroup> GetGroups(string customerID, bool getMembers, bool getSettings, string groupFields, int memberThreads, int settingsThreads, bool excludeUserCreated = false, Regex regexFilter = null)
         {
             BlockingCollection<GoogleGroup> completedGroups = new BlockingCollection<GoogleGroup>();
 
-            Task t = new Task(() => GroupRequestFactory.PopulateGroups(customerID, null, groupFields, getMembers, getSettings, completedGroups, excludeUserCreated, regexFilter));
+            Task t = new Task(() => this.PopulateGroups(customerID, null, groupFields, getMembers, getSettings, completedGroups, excludeUserCreated, regexFilter, settingsThreads, memberThreads));
             t.Start();
 
             foreach (GoogleGroup group in completedGroups.GetConsumingEnumerable())
@@ -54,7 +75,7 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        private static void PopulateGroups(string customerID, string userKey, string groupFields, bool getMembers, bool getSettings, BlockingCollection<GoogleGroup> completedGroups, bool excludeUserCreated, Regex regexFilter)
+        private void PopulateGroups(string customerID, string userKey, string groupFields, bool getMembers, bool getSettings, BlockingCollection<GoogleGroup> completedGroups, bool excludeUserCreated, Regex regexFilter, int settingsThreads, int memberThreads)
         {
             BlockingCollection<GoogleGroup> settingsQueue = new BlockingCollection<GoogleGroup>();
             BlockingCollection<GoogleGroup> membersQueue = new BlockingCollection<GoogleGroup>();
@@ -64,21 +85,21 @@ namespace Lithnet.GoogleApps
 
             if (getSettings)
             {
-                Task t = new Task(() => GroupRequestFactory.ConsumeGroupSettingsQueue(GroupRequestFactory.SettingsThreads, settingsQueue, completedGroups));
+                Task t = new Task(() => this.ConsumeGroupSettingsQueue(settingsThreads, settingsQueue, completedGroups));
                 t.Start();
                 tasks.Add(t);
             }
 
             if (getMembers)
             {
-                Task t = new Task(() => GroupRequestFactory.ConsumeGroupMembershipQueue(GroupRequestFactory.MemberThreads, membersQueue, completedGroups));
+                Task t = new Task(() => this.ConsumeGroupMembershipQueue(memberThreads, membersQueue, completedGroups));
                 t.Start();
                 tasks.Add(t);
             }
 
             Task t1 = new Task(() =>
             {
-                using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+                using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
                 {
                     string token = null;
                     GroupsResource.ListRequest request = connection.Item.Groups.List();
@@ -119,7 +140,7 @@ namespace Lithnet.GoogleApps
                                 }
                             }
 
-                            GoogleGroup g = new GoogleGroup(group, false, false);
+                            GoogleGroup g = new GoogleGroup(group);
                             g.RequiresMembers = getMembers;
                             g.RequiresSettings = getSettings;
 
@@ -156,7 +177,7 @@ namespace Lithnet.GoogleApps
             Task.WhenAll(tasks).ContinueWith((a) => completedGroups.CompleteAdding());
         }
 
-        private static void ConsumeGroupMembershipQueue(int threads, BlockingCollection<GoogleGroup> groups, BlockingCollection<GoogleGroup> completedGroups)
+        private void ConsumeGroupMembershipQueue(int threads, BlockingCollection<GoogleGroup> groups, BlockingCollection<GoogleGroup> completedGroups)
         {
             ParallelOptions op = new ParallelOptions { MaxDegreeOfParallelism = threads };
 
@@ -166,7 +187,19 @@ namespace Lithnet.GoogleApps
                 {
                     lock (group)
                     {
-                        group.GetMembership();
+                        try
+                        {
+                            group.Membership = this.MemberFactory.GetMembership(group.Group.Email);
+                        }
+                        catch (Exception ex)
+                        {
+                            group.Errors.Add(ex);
+                        }
+                        finally
+                        {
+                            group.LoadedMembers = true;
+                        }
+
                         Debug.WriteLine($"Group membership completed: {group.Group.Email}");
 
                         if (group.IsComplete)
@@ -186,7 +219,7 @@ namespace Lithnet.GoogleApps
             });
         }
 
-        private static void ConsumeGroupSettingsQueue(int threads, BlockingCollection<GoogleGroup> groups, BlockingCollection<GoogleGroup> completedGroups)
+        private void ConsumeGroupSettingsQueue(int threads, BlockingCollection<GoogleGroup> groups, BlockingCollection<GoogleGroup> completedGroups)
         {
             ParallelOptions op = new ParallelOptions { MaxDegreeOfParallelism = threads };
 
@@ -196,7 +229,19 @@ namespace Lithnet.GoogleApps
                 {
                     lock (group)
                     {
-                        group.GetSettings();
+                        try
+                        {
+                            group.Settings = this.SettingsFactory.Get(group.Group.Email);
+                        }
+                        catch (Exception ex)
+                        {
+                            group.Errors.Add(ex);
+                        }
+                        finally
+                        {
+                            group.LoadedSettings = true;
+                        }
+
                         Debug.WriteLine($"Group settings completed: {group.Group.Email}");
 
                         if (group.IsComplete)
@@ -216,27 +261,27 @@ namespace Lithnet.GoogleApps
             });
         }
 
-        public static string Delete(string groupKey)
+        public string Delete(string groupKey)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.DeleteRequest request = connection.Item.Groups.Delete(groupKey);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static Group Add(Group item)
+        public Group Add(Group item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.InsertRequest request = connection.Item.Groups.Insert(item);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static Group Update(string groupKey, Group item)
+        public Group Update(string groupKey, Group item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
 
                 GroupsResource.UpdateRequest request = connection.Item.Groups.Update(item, groupKey);
@@ -244,18 +289,18 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static Group Patch(string groupKey, Group item)
+        public Group Patch(string groupKey, Group item)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.PatchRequest request = connection.Item.Groups.Patch(item, groupKey);
                 return request.ExecuteWithBackoff();
             }
         }
 
-        public static Group Get(string groupKey)
+        public Group Get(string groupKey)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.GetRequest request = connection.Item.Groups.Get(groupKey);
                 Group result = request.ExecuteWithBackoff();
@@ -263,9 +308,9 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static void AddAlias(string id, string newAlias)
+        public void AddAlias(string id, string newAlias)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 Alias alias = new Alias { AliasValue = newAlias };
 
@@ -274,18 +319,18 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static void RemoveAlias(string id, string existingAlias)
+        public void RemoveAlias(string id, string existingAlias)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.AliasesResource.DeleteRequest request = connection.Item.Groups.Aliases.Delete(id, existingAlias);
                 request.ExecuteWithBackoff();
             }
         }
 
-        public static IEnumerable<string> GetAliases(string id)
+        public IEnumerable<string> GetAliases(string id)
         {
-            using (PoolItem<DirectoryService> connection = ConnectionPools.DirectoryServicePool.Take(NullValueHandling.Ignore))
+            using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.AliasesResource.ListRequest request = connection.Item.Groups.Aliases.List(id);
                 Aliases aliases = request.ExecuteWithBackoff();
