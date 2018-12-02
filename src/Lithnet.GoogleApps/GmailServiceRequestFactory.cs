@@ -71,7 +71,7 @@ namespace Lithnet.GoogleApps
             return result.Delegates?.Select(t => t.DelegateEmail) ?? new List<string>();
         }
 
-        public IEnumerable<string> GetSendAs(string id)
+        public IEnumerable<string> GetSendAsAddresses(string id)
         {
             id.ThrowIfNotEmailAddress();
 
@@ -79,6 +79,16 @@ namespace Lithnet.GoogleApps
             UsersResource.SettingsResource.SendAsResource.ListRequest request = service.Users.Settings.SendAs.List(id);
             ListSendAsResponse result = request.ExecuteWithBackoff();
             return result.SendAs?.Select(t => t.SendAsEmail) ?? new List<string>();
+        }
+
+        public IEnumerable<SendAs> GetSendAs(string id)
+        {
+            id.ThrowIfNotEmailAddress();
+
+            GmailService service = this.GetService(id);
+            UsersResource.SettingsResource.SendAsResource.ListRequest request = service.Users.Settings.SendAs.List(id);
+            ListSendAsResponse result = request.ExecuteWithBackoff();
+            return result.SendAs ?? new List<SendAs>();
         }
 
         public void RemoveDelegate(string id, string @delegate)
@@ -124,7 +134,7 @@ namespace Lithnet.GoogleApps
 
             if (result.SendAs != null)
             {
-                foreach (SendAs item in result.SendAs)
+                foreach (SendAs item in result.SendAs.Where(t => !t.IsPrimary ?? false))
                 {
                     service.Users.Settings.SendAs.Delete(id, item.SendAsEmail).ExecuteWithBackoff(-1, 5);
                 }
@@ -147,6 +157,14 @@ namespace Lithnet.GoogleApps
             service.Users.Settings.SendAs.Create(new SendAs { SendAsEmail = sendAs }, id).ExecuteWithBackoff(-1, 100);
         }
 
+        public void AddSendAs(string id, SendAs sendAs)
+        {
+            id.ThrowIfNotEmailAddress();
+
+            GmailService service = this.GetService(id);
+            service.Users.Settings.SendAs.Create(sendAs, id).ExecuteWithBackoff(-1, 100);
+        }
+
         public void AddSendAs(string id, IEnumerable<string> sendAs)
         {
             id.ThrowIfNotEmailAddress();
@@ -155,6 +173,17 @@ namespace Lithnet.GoogleApps
             foreach (string item in sendAs)
             {
                 service.Users.Settings.SendAs.Create(new SendAs { SendAsEmail = item }, id).ExecuteWithBackoff(-1, 100);
+            }
+        }
+
+        public void AddSendAs(string id, IEnumerable<SendAs> sendAs)
+        {
+            id.ThrowIfNotEmailAddress();
+
+            GmailService service = this.GetService(id);
+            foreach (SendAs item in sendAs)
+            {
+                service.Users.Settings.SendAs.Create(item, id).ExecuteWithBackoff(-1, 100);
             }
         }
 
