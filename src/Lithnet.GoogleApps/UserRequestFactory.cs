@@ -67,12 +67,12 @@ namespace Lithnet.GoogleApps
 
                 request.Query = query;
                 request.PrettyPrint = false;
-                
+
                 do
                 {
                     request.PageToken = token;
 
-                    UserList pageResults = request.ExecuteWithBackoff();
+                    UserList pageResults = request.ExecuteWithRetryOnBackoff();
 
                     if (pageResults.UsersValue == null)
                     {
@@ -101,7 +101,7 @@ namespace Lithnet.GoogleApps
 
                 UserPatchRequest request = new UserPatchRequest(connection.Item, user, id);
 
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -116,7 +116,7 @@ namespace Lithnet.GoogleApps
 
                 UserPatchRequest request = new UserPatchRequest(connection.Item, user, id);
 
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -125,7 +125,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 UserDeleteRequest request = new UserDeleteRequest(connection.Item, id);
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -134,9 +134,9 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 UsersResource.UndeleteRequest request = new UsersResource.UndeleteRequest(connection.Item,
-                    new UserUndelete() {OrgUnitPath = orgUnitPath}, id);
+                    new UserUndelete() { OrgUnitPath = orgUnitPath }, id);
 
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -158,7 +158,7 @@ namespace Lithnet.GoogleApps
                 {
                     request.PageToken = token;
 
-                    UserList pageResults = request.ExecuteWithBackoff();
+                    UserList pageResults = request.ExecuteWithRetryOnBackoff();
 
                     if (pageResults.UsersValue == null)
                     {
@@ -196,7 +196,7 @@ namespace Lithnet.GoogleApps
                     request.Projection = UserGetRequest.ProjectionEnum.Full;
                 }
 
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -205,7 +205,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 InsertRequest request = new InsertRequest(connection.Item, item);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -215,7 +215,7 @@ namespace Lithnet.GoogleApps
             {
                 MakeAdminRequest request = new MakeAdminRequest(connection.Item, isAdmin, userKey);
 
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
             }
         }
 
@@ -224,7 +224,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 UserPatchRequest request = new UserPatchRequest(connection.Item, item, userKey);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -238,7 +238,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Include))
             {
                 UserUpdateRequest request = new UserUpdateRequest(connection.Item, item, userKey);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -248,7 +248,7 @@ namespace Lithnet.GoogleApps
             {
                 UserAliasListRequest request = new UserAliasListRequest(connection.Item, id);
 
-                UserAliases result = request.ExecuteWithBackoff();
+                UserAliases result = request.ExecuteWithRetryOnBackoff();
 
                 if (result.AliasesValue == null)
                 {
@@ -270,7 +270,7 @@ namespace Lithnet.GoogleApps
 
                 UserAliasInsertRequest request = new UserAliasInsertRequest(connection.Item, alias, id);
 
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
             }
         }
 
@@ -280,9 +280,8 @@ namespace Lithnet.GoogleApps
             {
                 UserAliasDeleteRequest request = new UserAliasDeleteRequest(connection.Item, id, existingAlias);
 
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
-
     }
 }

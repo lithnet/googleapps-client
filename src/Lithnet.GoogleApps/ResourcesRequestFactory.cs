@@ -78,7 +78,7 @@ namespace Lithnet.GoogleApps
                 {
                     request.PageToken = token;
 
-                    CalendarResources pageResults = request.ExecuteWithBackoff();
+                    CalendarResources pageResults = request.ExecuteWithRetryOnBackoff();
 
                     if (pageResults.Items == null)
                     {
@@ -101,7 +101,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.CalendarsResource.DeleteRequest request = new ResourcesResource.CalendarsResource.DeleteRequest(connection.Item, customerId, id);
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -118,7 +118,7 @@ namespace Lithnet.GoogleApps
 
                 request.Fields = fields;
 
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -147,25 +147,7 @@ namespace Lithnet.GoogleApps
                 {
                     request.PageToken = token;
 
-                    Acl pageResults;
-
-                    try
-                    {
-                        pageResults = request.ExecuteWithBackoff();
-                    }
-                    catch (Google.GoogleApiException e)
-                    {
-                        // 2018-01-17 List ACL is returning 404 randomly for some calendars. Subsequent calls seem to work
-                        if (e.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
-                        {
-                            Thread.Sleep(1000);
-                            pageResults = request.ExecuteWithBackoff();
-                        }
-                        else
-                        {
-                            throw;
-                        }
-                    }
+                    Acl pageResults = request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
 
                     if (pageResults.Items == null)
                     {
@@ -188,7 +170,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<CalendarService> connection = this.calendarServicePool.Take(NullValueHandling.Ignore))
             {
                 AclResource.GetRequest request = new AclResource.GetRequest(connection.Item, calendarId, ruleId);
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
             }
         }
 
@@ -197,7 +179,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<CalendarService> connection = this.calendarServicePool.Take(NullValueHandling.Ignore))
             {
                 AclResource.DeleteRequest request = new AclResource.DeleteRequest(connection.Item, calendarId, ruleId);
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -207,7 +189,7 @@ namespace Lithnet.GoogleApps
             {
                 AclResource.InsertRequest request = new AclResource.InsertRequest(connection.Item, body, calendarId);
                 request.SendNotifications = sendNotifications;
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
             }
         }
 
@@ -217,7 +199,7 @@ namespace Lithnet.GoogleApps
             {
                 AclResource.UpdateRequest request = new AclResource.UpdateRequest(connection.Item, body, calendarId, ruleId);
                 request.SendNotifications = sendNotifications;
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -227,7 +209,7 @@ namespace Lithnet.GoogleApps
             {
                 AclResource.PatchRequest request = new AclResource.PatchRequest(connection.Item, body, calendarId, ruleId);
                 request.SendNotifications = sendNotifications;
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -236,7 +218,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.CalendarsResource.InsertRequest request = new ResourcesResource.CalendarsResource.InsertRequest(connection.Item, item, customerId);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -245,7 +227,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.CalendarsResource.PatchRequest request = new ResourcesResource.CalendarsResource.PatchRequest(connection.Item, item, customerId, id);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -254,7 +236,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Include))
             {
                 ResourcesResource.CalendarsResource.UpdateRequest request = new ResourcesResource.CalendarsResource.UpdateRequest(connection.Item, item, customerId, id);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -280,7 +262,7 @@ namespace Lithnet.GoogleApps
 
                 do
                 {
-                    Buildings pageResults = request.ExecuteWithBackoff();
+                    Buildings pageResults = request.ExecuteWithRetryOnBackoff();
 
                     if (pageResults.BuildingsValue == null)
                     {
@@ -303,7 +285,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.BuildingsResource.DeleteRequest request = new ResourcesResource.BuildingsResource.DeleteRequest(connection.Item, customerId, id);
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -320,7 +302,7 @@ namespace Lithnet.GoogleApps
 
                 request.Fields = fields;
 
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -329,7 +311,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.BuildingsResource.InsertRequest request = new ResourcesResource.BuildingsResource.InsertRequest(connection.Item, item, customerId);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -338,7 +320,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.BuildingsResource.PatchRequest request = new ResourcesResource.BuildingsResource.PatchRequest(connection.Item, item, customerId, id);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -347,7 +329,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Include))
             {
                 ResourcesResource.BuildingsResource.UpdateRequest request = new ResourcesResource.BuildingsResource.UpdateRequest(connection.Item, item, customerId, id);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -374,7 +356,7 @@ namespace Lithnet.GoogleApps
 
                 do
                 {
-                    Features pageResults = request.ExecuteWithBackoff();
+                    Features pageResults = request.ExecuteWithRetryOnBackoff();
 
                     if (pageResults.FeaturesValue == null)
                     {
@@ -397,7 +379,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.FeaturesResource.DeleteRequest request = new ResourcesResource.FeaturesResource.DeleteRequest(connection.Item, customerId, id);
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -414,7 +396,7 @@ namespace Lithnet.GoogleApps
 
                 request.Fields = fields;
 
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -423,7 +405,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.FeaturesResource.InsertRequest request = new ResourcesResource.FeaturesResource.InsertRequest(connection.Item, item, customerId);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -432,7 +414,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 ResourcesResource.FeaturesResource.PatchRequest request = new ResourcesResource.FeaturesResource.PatchRequest(connection.Item, item, customerId, id);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -441,7 +423,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Include))
             {
                 ResourcesResource.FeaturesResource.UpdateRequest request = new ResourcesResource.FeaturesResource.UpdateRequest(connection.Item, item, customerId, id);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
     }

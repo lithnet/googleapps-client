@@ -39,29 +39,8 @@ namespace Lithnet.GoogleApps
             using (PoolItem<GroupssettingsService> connection = this.groupSettingsServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupSettingsGetRequest request = new GroupSettingsGetRequest(connection.Item, mail);
-
-                try
-                {
-                    return request.ExecuteWithBackoff();
-                }
-                catch (Google.GoogleApiException e)
-                {
-                    // 2016-10-29 Groupssettings is returning 400 randomly for some group settings. Subsequent calls seem to work
-                    if (e.HttpStatusCode == System.Net.HttpStatusCode.BadRequest)
-                    {
-                        Thread.Sleep(1000);
-                        return request.ExecuteWithBackoff();
-                    }
-
-                    // 2017-11-07 Groupssettings is returning 404 randomly for some group settings. Subsequent calls seem to work
-                    if (e.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
-                    {
-                        Thread.Sleep(1000);
-                        return request.ExecuteWithBackoff();
-                    }
-
-                    throw;
-                }
+                // 2016-10-29 Groupssettings is returning 400 randomly for some group settings. Subsequent calls seem to work
+                return request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.NotFound | RetryEvents.BadRequest);
             }
         }
 
@@ -72,7 +51,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<GroupssettingsService> connection = this.groupSettingsServicePool.Take(NullValueHandling.Include))
             {
                 GroupSettingsUpdateRequest request = new GroupSettingsUpdateRequest(connection.Item, item, mail);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -83,7 +62,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<GroupssettingsService> connection = this.groupSettingsServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupSettingsPatchRequest request = new GroupSettingsPatchRequest(connection.Item, item, mail);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
     }

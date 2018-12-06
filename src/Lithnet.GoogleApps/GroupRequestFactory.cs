@@ -113,7 +113,7 @@ namespace Lithnet.GoogleApps
                     {
                         request.PageToken = token;
 
-                        Groups pageResults = request.ExecuteWithBackoff();
+                        Groups pageResults = request.ExecuteWithRetryOnBackoff();
 
                         if (pageResults.GroupsValue == null)
                         {
@@ -266,7 +266,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.DeleteRequest request = connection.Item.Groups.Delete(groupKey);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -275,7 +275,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.InsertRequest request = connection.Item.Groups.Insert(item);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -285,7 +285,7 @@ namespace Lithnet.GoogleApps
             {
 
                 GroupsResource.UpdateRequest request = connection.Item.Groups.Update(item, groupKey);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -294,7 +294,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.PatchRequest request = connection.Item.Groups.Patch(item, groupKey);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -303,7 +303,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.GetRequest request = connection.Item.Groups.Get(groupKey);
-                Group result = request.ExecuteWithBackoff();
+                Group result = request.ExecuteWithRetryOnBackoff();
                 return result;
             }
         }
@@ -315,7 +315,7 @@ namespace Lithnet.GoogleApps
                 Alias alias = new Alias { AliasValue = newAlias };
 
                 GroupsResource.AliasesResource.InsertRequest request = connection.Item.Groups.Aliases.Insert(alias, id);
-                Alias result = request.ExecuteWithBackoff();
+                Alias result = request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
             }
         }
 
@@ -324,7 +324,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.AliasesResource.DeleteRequest request = connection.Item.Groups.Aliases.Delete(id, existingAlias);
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -333,7 +333,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 GroupsResource.AliasesResource.ListRequest request = connection.Item.Groups.Aliases.List(id);
-                Aliases aliases = request.ExecuteWithBackoff();
+                Aliases aliases = request.ExecuteWithRetryOnBackoff();
                 return aliases.AliasesValue?.Select(t => t.AliasValue) ?? new List<string>();
             }
         }

@@ -60,7 +60,7 @@ namespace Lithnet.GoogleApps
                     try
                     {
                         this.WaitForGate();
-                        members = request.ExecuteWithBackoff();
+                        members = request.ExecuteWithRetryOnBackoff();
                     }
                     finally
                     {
@@ -125,7 +125,7 @@ namespace Lithnet.GoogleApps
                 {
                     MembersResource.InsertRequest request = poolService.Item.Members.Insert(item, groupID);
                     Trace.WriteLine($"Adding member {item.Email ?? item.Id} as {item.Role} to group {groupID}");
-                    request.ExecuteWithBackoff();
+                    request.ExecuteWithRetryOnBackoff();
                 }
             }
             catch (GoogleApiException e)
@@ -153,7 +153,7 @@ namespace Lithnet.GoogleApps
                 {
                     MembersResource.PatchRequest request = poolService.Item.Members.Patch(item, groupID, item.Email);
                     Trace.WriteLine($"Changing member {item.Email ?? item.Id} role to {item.Role} in group {groupID}");
-                    request.ExecuteWithBackoff();
+                    request.ExecuteWithRetryOnBackoff();
                 }
             }
             finally
@@ -179,7 +179,7 @@ namespace Lithnet.GoogleApps
                     Trace.WriteLine($"Removing member {memberID} from group {groupID}");
                     try
                     {
-                        request.ExecuteWithBackoff();
+                        request.ExecuteWithRetryOnBackoff();
                     }
                     catch (GoogleApiException e)
                     {
@@ -257,7 +257,7 @@ namespace Lithnet.GoogleApps
                         });
                 }
 
-                batchRequest.ExecuteWithBackoff(poolService.Item.Name);
+                batchRequest.ExecuteWithRetryOnBackoff(poolService.Item.Name);
 
                 baseCount += GroupMemberRequestFactory.BatchSize;
             }
@@ -271,7 +271,7 @@ namespace Lithnet.GoogleApps
             {
                 try
                 {
-                    request.Value.ExecuteWithBackoff();
+                    request.Value.ExecuteWithRetryOnBackoff();
                 }
                 catch (GoogleApiException e)
                 {

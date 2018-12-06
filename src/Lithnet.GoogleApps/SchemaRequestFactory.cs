@@ -36,7 +36,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 SchemasResource.InsertRequest schemaReq = connection.Item.Schemas.Insert(schema, customerID);
-                schemaReq.ExecuteWithBackoff();
+                schemaReq.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -45,7 +45,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 SchemasResource.DeleteRequest schemaReq = connection.Item.Schemas.Delete(customerID, schemaKey);
-                schemaReq.ExecuteWithBackoff();
+                schemaReq.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -54,7 +54,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Include))
             {
                 SchemasResource.UpdateRequest schemaReq = connection.Item.Schemas.Update(schema, customerID, schema.SchemaName);
-                schemaReq.ExecuteWithBackoff();
+                schemaReq.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -65,7 +65,7 @@ namespace Lithnet.GoogleApps
                 using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
                 {
                     SchemasResource.GetRequest schemaReq = connection.Item.Schemas.Get(customerID, schemaName);
-                    Schema schema = schemaReq.ExecuteWithBackoff();
+                    Schema schema = schemaReq.ExecuteWithRetryOnBackoff();
                     if (schema != null)
                     {
                         return true;
@@ -94,7 +94,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 SchemasResource.GetRequest schemaReq = connection.Item.Schemas.Get(customerID, schemaName);
-                return schemaReq.ExecuteWithBackoff();
+                return schemaReq.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -103,7 +103,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 SchemasResource.ListRequest schemaReq = connection.Item.Schemas.List(customerID);
-                return schemaReq.ExecuteWithBackoff();
+                return schemaReq.ExecuteWithRetryOnBackoff();
             }
         }
 

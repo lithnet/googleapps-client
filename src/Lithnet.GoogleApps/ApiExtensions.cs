@@ -7,32 +7,33 @@ using Google.Apis.Requests;
 using System.Security;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Google.Apis.Auth.OAuth2.Responses;
 
 namespace Lithnet.GoogleApps
 {
     public static class ApiExtensions
     {
-        private static int backoffRetryCount = 8;
+        private static int retryCount = 8;
 
         private static Random randomNumberGenerator = new Random();
 
-        public static int BackoffRetryCount
+        public static int RetryCount
         {
-            get => ApiExtensions.backoffRetryCount;
-            set => ApiExtensions.backoffRetryCount = value;
+            get => ApiExtensions.retryCount;
+            set => ApiExtensions.retryCount = value;
         }
 
-        public static void ExecuteWithBackoff(this BatchRequest request, string serviceName)
+        public static void ExecuteWithRetryOnBackoff(this BatchRequest request, string serviceName)
         {
-            request.ExecuteWithBackoff(serviceName, ApiExtensions.BackoffRetryCount);
+            request.ExecuteWithRetryOnBackoff(serviceName, ApiExtensions.RetryCount);
         }
 
-        public static void ExecuteWithBackoff(this BatchRequest request, string serviceName, int retryAttempts)
+        public static void ExecuteWithRetryOnBackoff(this BatchRequest request, string serviceName, int retryAttempts)
         {
-            request.ExecuteWithBackoff(serviceName, retryAttempts, 1);
+            request.ExecuteWithRetryOnBackoff(serviceName, retryAttempts, 1);
         }
 
-        public static void ExecuteWithBackoff(this BatchRequest request, string serviceName, int retryAttempts, int consumeTokens)
+        public static void ExecuteWithRetryOnBackoff(this BatchRequest request, string serviceName, int retryAttempts, int consumeTokens)
         {
             int attemptCount = 0;
 
@@ -53,7 +54,7 @@ namespace Lithnet.GoogleApps
                     {
                         if (ApiExtensions.IsRetryableError(ex.HttpStatusCode, ex.Message))
                         {
-                            ApiExtensions.SleepThread(attemptCount);
+                            ApiExtensions.SleepThread(attemptCount, retryAttempts);
                             continue;
                         }
                     }
@@ -63,23 +64,48 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request)
+        public static T ExecuteWithRetryOnBackoff<T>(this ClientServiceRequest<T> request)
         {
-            return request.ExecuteWithBackoff(ApiExtensions.BackoffRetryCount, 1);
+            return request.ExecuteWithRetryOnBackoff(ApiExtensions.RetryCount);
         }
 
-        public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request, int retryAttempts)
+        public static T ExecuteWithRetryOnBackoff<T>(this ClientServiceRequest<T> request, int retryAttempts)
         {
-            return request.ExecuteWithBackoff(retryAttempts, 1);
+            return request.ExecuteWithRetryOnBackoff(retryAttempts, 1);
         }
 
-        public static T ExecuteWithBackoff<T>(this ClientServiceRequest<T> request, int retryAttempts, int consumeTokens)
+        public static T ExecuteWithRetryOnBackoff<T>(this ClientServiceRequest<T> request, int retryAttempts, int consumeTokens)
+        {
+            return request.ExecuteWithRetry(RetryEvents.Backoff, retryAttempts, consumeTokens);
+        }
+
+        public static T ExecuteWithRetry<T>(this ClientServiceRequest<T> request, RetryEvents policy)
+        {
+            return request.ExecuteWithRetry(policy, ApiExtensions.retryCount, 1);
+        }
+
+        public static T ExecuteWithRetry<T>(this ClientServiceRequest<T> request, RetryEvents policy, int retryAttempts)
+        {
+            return request.ExecuteWithRetry(policy, retryAttempts, 1);
+        }
+
+        public static T ExecuteWithRetry<T>(this ClientServiceRequest<T> request, RetryEvents policy, int retryAttempts, int consumeTokens)
+        {
+            bool Result(Exception ex) => policy.HasFlag(RetryEvents.Backoff) && ApiExtensions.ShouldRetryOnBackoffError(ex)
+                                         || policy.HasFlag(RetryEvents.NotFound) && ApiExtensions.ShouldRetryOnNotFound(ex)
+                                         || policy.HasFlag(RetryEvents.OAuthImpersonationError) && ApiExtensions.ShouldRetryOnOAuthError(ex)
+                                         || policy.HasFlag(RetryEvents.BadRequest) && ApiExtensions.ShouldRetryOnBadRequest(ex);
+
+            return request.ExecuteWithRetry((Func<Exception, bool>) Result, retryAttempts, consumeTokens);
+        }
+
+        public static T ExecuteWithRetry<T>(this ClientServiceRequest<T> request, Func<Exception, bool> shouldRetry, int retryAttempts, int consumeTokens)
         {
             int attemptCount = 0;
 
             if (retryAttempts < 0)
             {
-                retryAttempts = Math.Max(0, backoffRetryCount);
+                retryAttempts = Math.Max(0, ApiExtensions.retryCount);
             }
 
             consumeTokens = Math.Max(1, consumeTokens);
@@ -93,15 +119,13 @@ namespace Lithnet.GoogleApps
                     RateLimiter.GetOrCreateBucket(request.Service.Name).Consume(consumeTokens);
                     return request.Execute();
                 }
-                catch (Google.GoogleApiException ex)
+                catch (Exception ex)
                 {
-                    Trace.WriteLine($"Google API request error\n{request.HttpMethod} {ex.Error?.Code} {ex.Error?.Message}");
-
                     if (attemptCount <= retryAttempts)
                     {
-                        if (ApiExtensions.IsRetryableError(ex.HttpStatusCode, ex.Message))
+                        if (shouldRetry(ex))
                         {
-                            ApiExtensions.SleepThread(attemptCount);
+                            ApiExtensions.SleepThread(attemptCount, retryAttempts);
                             continue;
                         }
                     }
@@ -111,13 +135,16 @@ namespace Lithnet.GoogleApps
             }
         }
 
+       
+
+
         public static bool IsRetryableError(HttpStatusCode code, string message)
         {
             switch (code)
             {
                 case HttpStatusCode.InternalServerError:
                 case HttpStatusCode.ServiceUnavailable:
-                case (HttpStatusCode)429:
+                case (HttpStatusCode) 429:
                     return true;
 
                 case HttpStatusCode.Forbidden:
@@ -135,57 +162,16 @@ namespace Lithnet.GoogleApps
             return false;
         }
 
-        private static void SleepThread(int attemptCount)
+        private static void SleepThread(int attemptCount, int retryAttempts)
         {
-            Interlocked.Increment(ref ApiExtensions.backoffRetryCount);
             int interval = (attemptCount * 1000) + randomNumberGenerator.Next(1000);
-            Trace.WriteLine($"Backing off request attempt {attemptCount} for {interval} milliseconds");
+            Trace.WriteLine($"Backing off request attempt {attemptCount}/{retryAttempts} for {interval} milliseconds");
             Thread.Sleep(interval);
         }
 
         public static bool IsNullOrNullPlaceholder(this string s)
         {
             return s == null || s == Constants.NullValuePlaceholder;
-        }
-
-        public static T ExecuteWithRetryOnNotFound<T>(this Func<T> t, int sleepInterval = 1000)
-        {
-            try
-            {
-                return t.Invoke();
-            }
-            catch (Google.GoogleApiException ex)
-            {
-                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
-                {
-                    Trace.WriteLine($"Object was not found. Sleeping {sleepInterval} milliseconds before retrying");
-                    //Newly created object was not ready. Sleeping 1 second
-                    Thread.Sleep(sleepInterval);
-                    return t.Invoke();
-                }
-
-                throw;
-            }
-        }
-
-        public static void ExecuteWithRetryOnNotFound(this Action t, int sleepInterval = 1000)
-        {
-            try
-            {
-                t.Invoke();
-            }
-            catch (Google.GoogleApiException ex)
-            {
-                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
-                {
-                    Trace.WriteLine($"Object was not found. Sleeping {sleepInterval} milliseconds before retrying");
-                    //Newly created object was not ready. Sleeping 1 second
-                    Thread.Sleep(sleepInterval);
-                    t.Invoke();
-                }
-
-                throw;
-            }
         }
 
         public static T InvokeWithRateLimit<T>(this Func<T> t, string bucketName, int consumeTokens = 1)
@@ -247,6 +233,67 @@ namespace Lithnet.GoogleApps
             {
                 throw new ArgumentException("Mail argument must be a valid email address");
             }
+        }
+
+
+        private static bool ShouldRetryOnBackoffError(Exception e)
+        {
+            if (e is Google.GoogleApiException ex)
+            {
+                Trace.WriteLine($"Google API request error - {ex.Error?.Code} {ex.Error?.Message}");
+
+                if (ApiExtensions.IsRetryableError(ex.HttpStatusCode, ex.Message))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ShouldRetryOnOAuthError(Exception e)
+        {
+            if (e is TokenResponseException ex)
+            {
+                Trace.WriteLine($"Google OAuth request error - {ex.StatusCode} {ex.Message}");
+
+                if (ex.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ShouldRetryOnNotFound(Exception e)
+        {
+            if (e is Google.GoogleApiException ex)
+            {
+                Trace.WriteLine($"Google API request error - {ex.Error?.Code} {ex.Error?.Message}");
+
+                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ShouldRetryOnBadRequest(Exception e)
+        {
+            if (e is Google.GoogleApiException ex)
+            {
+                Trace.WriteLine($"Google API request error - {ex.Error?.Code} {ex.Error?.Message}");
+
+                if (ex.HttpStatusCode == HttpStatusCode.BadRequest)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

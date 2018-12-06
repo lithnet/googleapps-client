@@ -39,7 +39,7 @@ namespace Lithnet.GoogleApps
             {
                 DomainListRequest request = new DomainListRequest(connection.Item, customerID);
 
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -49,7 +49,7 @@ namespace Lithnet.GoogleApps
             {
                 DomainGetRequest request = new DomainGetRequest(connection.Item, domain, customerID);
 
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -58,7 +58,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 DomainDeleteRequest request = new DomainDeleteRequest(connection.Item, domain, customerID);
-                request.ExecuteWithBackoff();
+                request.ExecuteWithRetryOnBackoff();
             }
         }
 
@@ -67,7 +67,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 DomainInsertRequest request = new DomainInsertRequest(connection.Item, customerID, domain);
-                return request.ExecuteWithBackoff();
+                return request.ExecuteWithRetryOnBackoff();
             }
         }
     }
