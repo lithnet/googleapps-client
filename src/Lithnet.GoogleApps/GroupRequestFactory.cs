@@ -334,7 +334,7 @@ namespace Lithnet.GoogleApps
             {
                 GroupsResource.AliasesResource.ListRequest request = connection.Item.Groups.Aliases.List(id);
                 Aliases aliases = request.ExecuteWithRetryOnBackoff();
-                return aliases.AliasesValue?.Select(t => t.AliasValue) ?? new List<string>();
+                return aliases?.AliasesValue?.Select(t => t.AliasValue) ?? new List<string>();
             }
         }
     }
