@@ -26,6 +26,8 @@ namespace Lithnet.GoogleApps
 
         public GroupSettingsRequestFactory SettingsFactory { get; private set; }
 
+        private readonly TimeSpan DefaultTimeout = new TimeSpan(0, 2, 0);
+
         public GroupRequestFactory(GoogleServiceCredentials creds, string[] groupScopes, string[] groupSettingsScopes, int groupPoolSize, int settingsPoolSize)
         {
             this.directoryServicePool = new BaseClientServicePool<DirectoryService>(groupPoolSize, () =>
@@ -39,7 +41,8 @@ namespace Lithnet.GoogleApps
                     DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
                 });
 
-                x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                //x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                x.HttpClient.Timeout = DefaultTimeout;
                 return x;
             });
 
@@ -113,7 +116,7 @@ namespace Lithnet.GoogleApps
                     {
                         request.PageToken = token;
 
-                        Groups pageResults = request.ExecuteWithRetryOnBackoff();
+                        Groups pageResults = request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.Timeout, ApiExtensions.RetryCount);
 
                         if (pageResults.GroupsValue == null)
                         {
@@ -334,7 +337,7 @@ namespace Lithnet.GoogleApps
             {
                 GroupsResource.AliasesResource.ListRequest request = connection.Item.Groups.Aliases.List(id);
                 Aliases aliases = request.ExecuteWithRetryOnBackoff();
-                return aliases?.AliasesValue?.Select(t => t.AliasValue) ?? new List<string>();
+                return aliases.AliasesValue?.Select(t => t.AliasValue) ?? new List<string>();
             }
         }
     }

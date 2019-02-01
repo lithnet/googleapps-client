@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using Google;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Gmail.v1;
 using Google.Apis.Gmail.v1.Data;
@@ -21,9 +23,13 @@ namespace Lithnet.GoogleApps
 
         private readonly string[] scopes;
 
-        private readonly OrderedDictionary cache = new OrderedDictionary(100);
+        private const int CacheSize = 10;
 
-        public int RetryCount { get; set; } = 50;
+        private readonly OrderedDictionary cache = new OrderedDictionary(CacheSize);
+
+        private readonly TimeSpan DefaultTimeout = new TimeSpan(0, 5, 0);
+
+        public int RetryCount { get; set; } = 5;
 
         public GmailServiceRequestFactory(string serviceAccountID, X509Certificate2 x509Certificate, string[] scopes)
         {
@@ -33,6 +39,11 @@ namespace Lithnet.GoogleApps
         }
 
         private GmailService GetService(string user)
+        {
+            return this.GetService(user, Timeout.InfiniteTimeSpan);
+        }
+
+        private GmailService GetService(string user, TimeSpan timeout)
         {
             lock (this.cache)
             {
@@ -53,10 +64,10 @@ namespace Lithnet.GoogleApps
                         DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
                     });
 
-                    x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                    x.HttpClient.Timeout = timeout;
                     this.cache.Add(user, x);
 
-                    if (this.cache.Count > 100)
+                    if (this.cache.Count > CacheSize)
                     {
                         this.cache.RemoveAt(0);
                     }
@@ -78,22 +89,52 @@ namespace Lithnet.GoogleApps
 
         public IEnumerable<string> GetSendAsAddresses(string id)
         {
-            id.ThrowIfNotEmailAddress();
 
-            GmailService service = this.GetService(id);
-            UsersResource.SettingsResource.SendAsResource.ListRequest request = service.Users.Settings.SendAs.List(id);
-            ListSendAsResponse result = request.ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount);
-            return result.SendAs?.Select(t => t.SendAsEmail) ?? new List<string>();
+            try
+            {
+                id.ThrowIfNotEmailAddress();
+
+                GmailService service = this.GetService(id, DefaultTimeout);
+                UsersResource.SettingsResource.SendAsResource.ListRequest request = service.Users.Settings.SendAs.List(id);
+                ListSendAsResponse result = request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.Timeout, this.RetryCount);
+                return result.SendAs?.Select(t => t.SendAsEmail) ?? new List<string>();
+            }
+            catch(GoogleApiException ex)
+            {
+                if (ex.HttpStatusCode == HttpStatusCode.BadRequest && ex.Message != null && ex.Message.IndexOf("Mail service not enabled", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return new List<string>();
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
         public IEnumerable<SendAs> GetSendAs(string id)
         {
             id.ThrowIfNotEmailAddress();
 
-            GmailService service = this.GetService(id);
-            UsersResource.SettingsResource.SendAsResource.ListRequest request = service.Users.Settings.SendAs.List(id);
-            ListSendAsResponse result = request.ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount);
-            return result.SendAs ?? new List<SendAs>();
+            try
+            {
+                GmailService service = this.GetService(id, DefaultTimeout);
+                UsersResource.SettingsResource.SendAsResource.ListRequest request = service.Users.Settings.SendAs.List(id);
+                ListSendAsResponse result = request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.Timeout, this.RetryCount);
+                return result.SendAs ?? new List<SendAs>();
+            }
+            catch (GoogleApiException ex)
+            {
+                if (ex.HttpStatusCode == HttpStatusCode.BadRequest && ex.Message != null && (ex.Message.IndexOf("Mail service not enabled", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    ex.Message.IndexOf("failedPrecondition", StringComparison.OrdinalIgnoreCase) >= 0))
+                {
+                    return new List<SendAs>();
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
         public void RemoveDelegate(string id, string @delegate)
@@ -109,9 +150,9 @@ namespace Lithnet.GoogleApps
         {
             id.ThrowIfNotEmailAddress();
 
-            GmailService service = this.GetService(id);
+            GmailService service = this.GetService(id, DefaultTimeout);
             UsersResource.SettingsResource.SendAsResource.DeleteRequest request = service.Users.Settings.SendAs.Delete(id, sendas);
-            request.ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount, 5);
+            request.ExecuteWithRetry(RetryEvents.BackoffOAuth, this.RetryCount, 5);
         }
 
         public void RemoveDelegate(string id)
@@ -134,14 +175,14 @@ namespace Lithnet.GoogleApps
         {
             id.ThrowIfNotEmailAddress();
 
-            GmailService service = this.GetService(id);
-            ListSendAsResponse result = service.Users.Settings.SendAs.List(id).ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount);
+            GmailService service = this.GetService(id, DefaultTimeout);
+            ListSendAsResponse result = service.Users.Settings.SendAs.List(id).ExecuteWithRetry(RetryEvents.BackoffOAuth, this.RetryCount);
 
             if (result.SendAs != null)
             {
                 foreach (SendAs item in result.SendAs.Where(t => !t.IsPrimary ?? false))
                 {
-                    service.Users.Settings.SendAs.Delete(id, item.SendAsEmail).ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount, 5);
+                    service.Users.Settings.SendAs.Delete(id, item.SendAsEmail).ExecuteWithRetry(RetryEvents.BackoffOAuth, this.RetryCount, 5);
                 }
             }
         }
@@ -158,7 +199,7 @@ namespace Lithnet.GoogleApps
         {
             id.ThrowIfNotEmailAddress();
 
-            GmailService service = this.GetService(id);
+            GmailService service = this.GetService(id, DefaultTimeout);
             service.Users.Settings.SendAs.Create(new SendAs { SendAsEmail = sendAs }, id).ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount, 100);
         }
 
@@ -166,7 +207,7 @@ namespace Lithnet.GoogleApps
         {
             id.ThrowIfNotEmailAddress();
 
-            GmailService service = this.GetService(id);
+            GmailService service = this.GetService(id, DefaultTimeout);
             service.Users.Settings.SendAs.Create(sendAs, id).ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount, 100);
         }
 
@@ -174,7 +215,7 @@ namespace Lithnet.GoogleApps
         {
             id.ThrowIfNotEmailAddress();
 
-            GmailService service = this.GetService(id);
+            GmailService service = this.GetService(id, DefaultTimeout);
             foreach (string item in sendAs)
             {
                 service.Users.Settings.SendAs.Create(new SendAs { SendAsEmail = item }, id).ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount, 100);
@@ -185,7 +226,7 @@ namespace Lithnet.GoogleApps
         {
             id.ThrowIfNotEmailAddress();
 
-            GmailService service = this.GetService(id);
+            GmailService service = this.GetService(id, DefaultTimeout);
             foreach (SendAs item in sendAs)
             {
                 service.Users.Settings.SendAs.Create(item, id).ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount, 100);

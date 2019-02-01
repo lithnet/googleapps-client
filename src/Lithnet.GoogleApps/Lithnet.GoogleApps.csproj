@@ -11,7 +11,8 @@
     <AssemblyName>Lithnet.GoogleApps</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>9347d8d8</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
     <SccProjectName>SAK</SccProjectName>
     <SccLocalPath>SAK</SccLocalPath>
     <SccAuxPath>SAK</SccAuxPath>
@@ -38,6 +39,8 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AggregateCourseTeacherUpdateException.cs" />
+    <Compile Include="AggregateCourseStudentUpdateException.cs" />
     <Compile Include="AggregateGroupUpdateException.cs" />
     <Compile Include="ApiExtensions.cs" />
     <Compile Include="Api\DomainInsertRequest.cs" />
@@ -52,7 +55,13 @@
     <Compile Include="Api\GroupSettingsGetRequest.cs" />
     <Compile Include="Api\MakeAdminRequest.cs" />
     <Compile Include="Api\UserUndeleteRequest.cs" />
+    <Compile Include="ClassroomRequestFactory.cs" />
+    <Compile Include="CourseTeacherRequestFactory.cs" />
+    <Compile Include="GoogleCourse.cs" />
     <Compile Include="GoogleServiceCredentials.cs" />
+    <Compile Include="CourseStudentRequestFactory.cs" />
+    <Compile Include="ManagedObjects\CourseTeachers.cs" />
+    <Compile Include="ManagedObjects\CourseStudents.cs" />
     <Compile Include="OAuthGDataRequestFactory.cs" />
     <Compile Include="PoolT.cs" />
     <Compile Include="PoolItemT.cs" />
@@ -138,6 +147,9 @@
     <Reference Include="Google.Apis.Calendar.v3, Version=1.36.1.1424, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
       <HintPath>..\packages\Google.Apis.Calendar.v3.1.36.1.1424\lib\net45\Google.Apis.Calendar.v3.dll</HintPath>
     </Reference>
+    <Reference Include="Google.Apis.Classroom.v1, Version=1.36.1.1431, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Classroom.v1.1.36.1.1431\lib\net45\Google.Apis.Classroom.v1.dll</HintPath>
+    </Reference>
     <Reference Include="Google.Apis.Core, Version=1.36.1.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
       <HintPath>..\packages\Google.Apis.Core.1.36.1\lib\net45\Google.Apis.Core.dll</HintPath>
     </Reference>
@@ -180,12 +192,6 @@
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
-  </Target>
   <PropertyGroup>
     <PostBuildEvent>"C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe" sign /sha1 "$(CSCERTTHUMBPRINT)" /t http://timestamp.digicert.com /fd sha256 /v "$(TargetFileName)"
 
@@ -194,6 +200,12 @@
 d:\nuget\NuGet.exe pack $(ProjectPath) -OutputDirectory D:\nuget\packages</PostBuildEvent>
   </PropertyGroup>
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

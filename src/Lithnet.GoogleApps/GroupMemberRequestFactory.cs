@@ -60,7 +60,7 @@ namespace Lithnet.GoogleApps
                     try
                     {
                         this.WaitForGate();
-                        members = request.ExecuteWithRetryOnBackoff();
+                        members = request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.Timeout, ApiExtensions.RetryCount);
                     }
                     finally
                     {

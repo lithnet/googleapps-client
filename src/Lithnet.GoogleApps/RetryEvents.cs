@@ -14,6 +14,8 @@ namespace Lithnet.GoogleApps
         OAuthImpersonationError = 2,
         NotFound = 4,
         BadRequest = 8,
+        Timeout = 16,
+        Aborted = 32,
 
         BackoffOAuth = Backoff | OAuthImpersonationError,
         BackoffNotFound = Backoff | NotFound,

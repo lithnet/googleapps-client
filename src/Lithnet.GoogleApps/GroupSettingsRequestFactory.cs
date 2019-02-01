@@ -14,6 +14,8 @@ namespace Lithnet.GoogleApps
     {
         private readonly BaseClientServicePool<GroupssettingsService> groupSettingsServicePool;
 
+        private readonly TimeSpan DefaultTimeout = new TimeSpan(0, 2, 0);
+
         internal GroupSettingsRequestFactory(GoogleServiceCredentials creds, string[] scopes, int poolSize)
         {
             this.groupSettingsServicePool = new BaseClientServicePool<GroupssettingsService>(poolSize, () =>
@@ -27,7 +29,7 @@ namespace Lithnet.GoogleApps
                     DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None
                 });
 
-                x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                x.HttpClient.Timeout = DefaultTimeout;
                 return x;
             });
         }
@@ -40,7 +42,7 @@ namespace Lithnet.GoogleApps
             {
                 GroupSettingsGetRequest request = new GroupSettingsGetRequest(connection.Item, mail);
                 // 2016-10-29 Groupssettings is returning 400 randomly for some group settings. Subsequent calls seem to work
-                return request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.NotFound | RetryEvents.BadRequest);
+                return request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.NotFound | RetryEvents.BadRequest | RetryEvents.Timeout);
             }
         }
 
