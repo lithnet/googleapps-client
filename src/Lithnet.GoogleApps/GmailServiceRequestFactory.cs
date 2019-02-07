@@ -13,7 +13,7 @@ using Google.Apis.Http;
 using Google.Apis.Services;
 using Delegate = Google.Apis.Gmail.v1.Data.Delegate;
 
-namespace Lithnet.GoogleApps
+namespace Lithnet.GoogleApps  
 {
     public class GmailServiceRequestFactory
     {
@@ -29,7 +29,7 @@ namespace Lithnet.GoogleApps
 
         private readonly TimeSpan DefaultTimeout = new TimeSpan(0, 5, 0);
 
-        public int RetryCount { get; set; } = 5;
+        public int RetryCount { get; set; } = 12;
 
         public GmailServiceRequestFactory(string serviceAccountID, X509Certificate2 x509Certificate, string[] scopes)
         {
