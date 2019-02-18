@@ -20,7 +20,6 @@ namespace Lithnet.GoogleApps
     {
         private readonly BaseClientServicePool<DirectoryService> directoryServicePool;
 
-        private readonly TimeSpan DefaultTimeout = new TimeSpan(0, 2, 0);
 
         public UserRequestFactory(GoogleServiceCredentials creds, string[] scopes, int poolSize)
         {
@@ -35,8 +34,7 @@ namespace Lithnet.GoogleApps
                     DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
                 });
 
-                //x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
-                x.HttpClient.Timeout = DefaultTimeout;
+                x.HttpClient.Timeout = Settings.DefaultTimeout;
                 return x;
             });
         }
@@ -75,7 +73,7 @@ namespace Lithnet.GoogleApps
                 {
                     request.PageToken = token;
 
-                    UserList pageResults = request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.Timeout, ApiExtensions.RetryCount);
+                    UserList pageResults = request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.Timeout);
 
                     if (pageResults.UsersValue == null)
                     {

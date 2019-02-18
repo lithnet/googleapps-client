@@ -15,7 +15,7 @@ using static Google.Apis.Requests.BatchRequest;
 
 namespace Lithnet.GoogleApps
 {
-    public class CourseStudentRequestFactory
+    public partial class CourseStudentRequestFactory
     {
         private static string limiterName = "concurrent-classroom-students-requests";
 
@@ -215,19 +215,6 @@ namespace Lithnet.GoogleApps
             {
                 this.ReleaseGate();
             }
-        }
-
-
-        protected class ProcessBatchHelper<T>
-        {
-            public bool IgnoreExistingStudent { get; set; }
-            public bool IgnoreMissingStudent { get; set; }
-            public int BaseCount { get; set; }
-            public Dictionary<string, ClientServiceRequest<T>> RequestsToRetry { get; set; }
-            public ClientServiceRequest<T> Request { get; set; }
-            public List<string> FailedStudents { get; set; }
-            public List<Exception> Failures { get; set; }
-
         }
 
         private void ProcessBatches<T>(string id, bool ignoreExistingStudent, bool ignoreMissingStudent, IList<ClientServiceRequest<T>> requests, PoolItem<ClassroomService> poolService, Func<ProcessBatchHelper<T>, OnResponse<CoursesResource.StudentsResource>> onResponse)

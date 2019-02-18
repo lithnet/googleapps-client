@@ -27,8 +27,6 @@ namespace Lithnet.GoogleApps
 
         protected const string CourseState_Archived = "ARCHIVED";
 
-        private readonly TimeSpan DefaultTimeout = new TimeSpan(0, 2, 0);
-
         public int RetryCount { get; set; } = 5;
 
         public ClassroomRequestFactory(GoogleServiceCredentials creds, string[] scopes, int poolSize)
@@ -44,7 +42,7 @@ namespace Lithnet.GoogleApps
                     DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
                 });
 
-                x.HttpClient.Timeout = DefaultTimeout;
+                x.HttpClient.Timeout = Settings.DefaultTimeout;
                 return x;
             });
 

@@ -56,12 +56,15 @@
     <Compile Include="Api\MakeAdminRequest.cs" />
     <Compile Include="Api\UserUndeleteRequest.cs" />
     <Compile Include="ClassroomRequestFactory.cs" />
+    <Compile Include="CourseStudentRequestFactory.ProcessBatchHelper.cs" />
     <Compile Include="CourseTeacherRequestFactory.cs" />
+    <Compile Include="CourseTeacherRequestFactory.ProcessBatchHelper.cs" />
     <Compile Include="GoogleCourse.cs" />
     <Compile Include="GoogleServiceCredentials.cs" />
     <Compile Include="CourseStudentRequestFactory.cs" />
     <Compile Include="ManagedObjects\CourseTeachers.cs" />
     <Compile Include="ManagedObjects\CourseStudents.cs" />
+    <Compile Include="ManagedObjects\TypeObject.cs" />
     <Compile Include="OAuthGDataRequestFactory.cs" />
     <Compile Include="PoolT.cs" />
     <Compile Include="PoolItemT.cs" />

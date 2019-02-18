@@ -14,8 +14,6 @@ namespace Lithnet.GoogleApps
     {
         private readonly BaseClientServicePool<GroupssettingsService> groupSettingsServicePool;
 
-        private readonly TimeSpan DefaultTimeout = new TimeSpan(0, 2, 0);
-
         internal GroupSettingsRequestFactory(GoogleServiceCredentials creds, string[] scopes, int poolSize)
         {
             this.groupSettingsServicePool = new BaseClientServicePool<GroupssettingsService>(poolSize, () =>
@@ -29,7 +27,7 @@ namespace Lithnet.GoogleApps
                     DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None
                 });
 
-                x.HttpClient.Timeout = DefaultTimeout;
+                x.HttpClient.Timeout = Settings.DefaultTimeout;
                 return x;
             });
         }
