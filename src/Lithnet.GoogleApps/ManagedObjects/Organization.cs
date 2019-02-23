@@ -33,7 +33,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
         [JsonProperty("costCenter"), JsonConverter(typeof(JsonNullStringConverter))]
         public string CostCenter { get; set; }
-     
+
         [JsonIgnore]
         public bool IsPrimary => this.Primary ?? false;
 

@@ -102,7 +102,6 @@ namespace Lithnet.GoogleApps
 
             student.UserId = studentId;
 
-
             this.AddStudent(courseId, student, throwOnExistingStudent);
         }
 
@@ -138,7 +137,6 @@ namespace Lithnet.GoogleApps
                 this.ReleaseGate();
             }
         }
-
 
         public void RemoveStudent(string courseId, string userId)
         {
@@ -285,10 +283,8 @@ namespace Lithnet.GoogleApps
             }
         }
 
-
         private void ProcessStudentResponse<T>(string id, string studentKey, bool ignoreExistingStudent, bool ignoreMissingStudent, RequestError error, HttpResponseMessage message, Dictionary<string, ClientServiceRequest<T>> requestsToRetry, ClientServiceRequest<T> request, List<string> failedStudents, List<Exception> failures)
         {
-
             string requestType = request.GetType().Name;
 
             if (error == null)
@@ -361,7 +357,6 @@ namespace Lithnet.GoogleApps
                        };
                     });
                 }
-
             }
             finally
             {

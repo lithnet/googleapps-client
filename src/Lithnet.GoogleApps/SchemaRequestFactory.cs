@@ -87,7 +87,6 @@ namespace Lithnet.GoogleApps
                 {
                     throw;
                 }
-
             }
             catch (TokenResponseException ex)
             {

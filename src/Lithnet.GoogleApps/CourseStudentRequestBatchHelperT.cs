@@ -13,6 +13,5 @@ namespace Lithnet.GoogleApps
         public ClientServiceRequest<T> Request { get; set; }
         public List<string> FailedStudents { get; set; }
         public List<Exception> Failures { get; set; }
-
     }
 }

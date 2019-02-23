@@ -139,9 +139,6 @@ namespace Lithnet.GoogleApps
             }
         }
 
-       
-
-
         public static bool IsRetryableError(HttpStatusCode code, string message)
         {
             switch (code)
@@ -239,7 +236,6 @@ namespace Lithnet.GoogleApps
             }
         }
 
-
         private static bool ShouldRetryOnBackoffError(Exception e)
         {
             if (e is Google.GoogleApiException ex)
@@ -328,8 +324,6 @@ namespace Lithnet.GoogleApps
 
             return false;
         }
-
-         
 
 
     }

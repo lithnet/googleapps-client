@@ -17,7 +17,6 @@ using Group = Google.Apis.Admin.Directory.directory_v1.Data.Group;
 
 namespace Lithnet.GoogleApps
 {
-
     public class GroupRequestFactory
     {
         private readonly BaseClientServicePool<DirectoryService> directoryServicePool;
@@ -283,7 +282,6 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
-
                 GroupsResource.UpdateRequest request = connection.Item.Groups.Update(item, groupKey);
                 return request.ExecuteWithRetryOnBackoff();
             }

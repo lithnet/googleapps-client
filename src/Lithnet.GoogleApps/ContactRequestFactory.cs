@@ -26,7 +26,6 @@ namespace Lithnet.GoogleApps
                 service.RequestFactory = requestFactory;
                 return service;
             });
-
         }
 
         public IEnumerable<ContactEntry> GetContacts(string domain)
@@ -52,7 +51,6 @@ namespace Lithnet.GoogleApps
                     uri = result.NextChunk;
 
                 } while (uri != null);
-
             }
         }
 

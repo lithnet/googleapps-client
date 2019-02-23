@@ -100,7 +100,6 @@ namespace Lithnet.GoogleApps
 
             teacher.UserId = teacherId;
 
-
             this.AddTeacher(courseId, teacher, throwOnExistingTeacher);
         }
 
@@ -136,7 +135,6 @@ namespace Lithnet.GoogleApps
                 this.ReleaseGate();
             }
         }
-
 
         public void RemoveTeacher(string courseId, string userId)
         {
@@ -286,7 +284,6 @@ namespace Lithnet.GoogleApps
 
         private void ProcessTeacherResponse<T>(string id, string teacherKey, bool ignoreExistingTeacher, bool ignoreMissingTeacher, RequestError error, HttpResponseMessage message, Dictionary<string, ClientServiceRequest<T>> requestsToRetry, ClientServiceRequest<T> request, List<string> failedTeachers, List<Exception> failures)
         {
-
             string requestType = request.GetType().Name;
 
             if (error == null)
@@ -365,7 +362,6 @@ namespace Lithnet.GoogleApps
                 this.ReleaseGate();
             }
         }
-
 
         private bool IsExistingTeacherError(HttpStatusCode statusCode, string message)
         {

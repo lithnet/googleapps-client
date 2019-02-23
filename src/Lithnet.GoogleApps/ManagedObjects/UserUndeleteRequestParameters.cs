@@ -1,6 +1,6 @@
 ﻿using Google.Apis.Requests;
 using Newtonsoft.Json;
-    
+
 namespace Lithnet.GoogleApps.ManagedObjects
 {
     public class UserUndeleteRequestParameters : IDirectResponseSchema

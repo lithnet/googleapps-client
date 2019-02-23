@@ -58,5 +58,4 @@ namespace Lithnet.GoogleApps.Api
             Delete = 1
         }
     }
-
 }

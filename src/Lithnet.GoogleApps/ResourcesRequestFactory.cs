@@ -35,7 +35,7 @@ namespace Lithnet.GoogleApps
                 x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
                 return x;
             });
-            
+
             this.calendarServicePool = new BaseClientServicePool<CalendarService>(calendarServicePoolSize, () =>
             {
                 CalendarService x = new CalendarService(
@@ -332,7 +332,6 @@ namespace Lithnet.GoogleApps
                 return request.ExecuteWithRetryOnBackoff();
             }
         }
-
 
         public IEnumerable<Feature> GetFeatures(string customerID)
         {
