@@ -56,9 +56,9 @@
     <Compile Include="Api\MakeAdminRequest.cs" />
     <Compile Include="Api\UserUndeleteRequest.cs" />
     <Compile Include="ClassroomRequestFactory.cs" />
-    <Compile Include="CourseStudentRequestFactory.ProcessBatchHelper.cs" />
+    <Compile Include="CourseStudentRequestBatchHelperT.cs" />
     <Compile Include="CourseTeacherRequestFactory.cs" />
-    <Compile Include="CourseTeacherRequestFactory.ProcessBatchHelper.cs" />
+    <Compile Include="CourseTeacherRequestBatchHelperT.cs" />
     <Compile Include="GoogleCourse.cs" />
     <Compile Include="GoogleServiceCredentials.cs" />
     <Compile Include="CourseStudentRequestFactory.cs" />
