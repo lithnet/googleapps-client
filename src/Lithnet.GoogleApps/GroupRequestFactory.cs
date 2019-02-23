@@ -39,7 +39,7 @@ namespace Lithnet.GoogleApps
                     DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
                 });
 
-                x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
+                x.HttpClient.Timeout = Settings.DefaultTimeout;
                 return x;
             });
 
@@ -113,7 +113,7 @@ namespace Lithnet.GoogleApps
                     {
                         request.PageToken = token;
 
-                        Groups pageResults = request.ExecuteWithRetryOnBackoff();
+                        Groups pageResults = request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.Timeout);
 
                         if (pageResults.GroupsValue == null)
                         {

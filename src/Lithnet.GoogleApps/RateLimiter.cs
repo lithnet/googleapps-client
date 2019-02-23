@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Calendar.v3;
+using Google.Apis.Classroom.v1;
 using Google.Apis.Gmail.v1;
 using Google.Apis.Groupssettings.v1;
 using Google.GData.Contacts;
@@ -48,13 +49,21 @@ namespace Lithnet.GoogleApps
             RateLimiter.SetRateLimit(new GmailService().Name, requestsPerInterval, interval);
         }
 
+        public static void SetRateLimitClassroomService(int requestsPerInterval, TimeSpan interval)
+        {
+            RateLimiter.SetRateLimit(new ClassroomService().Name, requestsPerInterval, interval);
+        }
+
         private static void SetDefaultRateLimits()
         {
+        
             RateLimiter.SetRateLimit(new DirectoryService().Name, 1500, new TimeSpan(0, 0, 100));
             RateLimiter.SetRateLimit(new GroupssettingsService().Name, 500, new TimeSpan(0, 0, 100));
             RateLimiter.SetRateLimit(new CalendarService().Name, 1500, new TimeSpan(0, 0, 100));
             RateLimiter.SetRateLimit(new GmailService().Name, 250, new TimeSpan(0, 0, 1));
             RateLimiter.SetRateLimit(typeof(ContactsService).Name, 1500, new TimeSpan(0, 0, 100));
+            RateLimiter.SetRateLimit(new ClassroomService().Name, 48, new TimeSpan(0, 0, 10));
+
         }
 
         internal static TokenBucket GetOrCreateBucket(string name)

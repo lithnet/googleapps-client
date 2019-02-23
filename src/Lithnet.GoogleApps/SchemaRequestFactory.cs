@@ -3,6 +3,7 @@ using System.Threading;
 using Google.Apis.Admin.Directory.directory_v1;
 using Google.Apis.Admin.Directory.directory_v1.Data;
 using Google.Apis.Auth.OAuth2;
+using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Http;
 using Google.Apis.Services;
 using Newtonsoft.Json;
@@ -86,6 +87,18 @@ namespace Lithnet.GoogleApps
                 {
                     throw;
                 }
+
+            }
+            catch (TokenResponseException ex)
+            {
+                if (ex.StatusCode == System.Net.HttpStatusCode.Forbidden || ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return false;
+                }
+                else
+                {
+                    throw;
+                }
             }
         }
 
@@ -124,6 +137,17 @@ namespace Lithnet.GoogleApps
             catch (Google.GoogleApiException ex)
             {
                 if (ex.HttpStatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    return false;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (TokenResponseException ex)
+            {
+                if (ex.StatusCode == System.Net.HttpStatusCode.Forbidden || ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
                     return false;
                 }

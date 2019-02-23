@@ -62,7 +62,7 @@
         [JsonProperty("name"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Name { get; set; }
 
-        [JsonProperty("primaryLanguage"), JsonConverter(typeof(JsonNullStringConverter))]
+        [JsonProperty("primaryLanguage", NullValueHandling = NullValueHandling.Ignore), JsonConverter(typeof(JsonNullStringConverter))]
         public string PrimaryLanguage { get; set; }
 
         [JsonProperty("replyTo"), JsonConverter(typeof(JsonNullStringConverter))]

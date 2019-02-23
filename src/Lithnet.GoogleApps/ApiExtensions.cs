@@ -8,6 +8,8 @@ using System.Security;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Google.Apis.Auth.OAuth2.Responses;
+using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace Lithnet.GoogleApps
 {
@@ -94,7 +96,9 @@ namespace Lithnet.GoogleApps
             bool Result(Exception ex) => policy.HasFlag(RetryEvents.Backoff) && ApiExtensions.ShouldRetryOnBackoffError(ex)
                                          || policy.HasFlag(RetryEvents.NotFound) && ApiExtensions.ShouldRetryOnNotFound(ex)
                                          || policy.HasFlag(RetryEvents.OAuthImpersonationError) && ApiExtensions.ShouldRetryOnOAuthError(ex)
-                                         || policy.HasFlag(RetryEvents.BadRequest) && ApiExtensions.ShouldRetryOnBadRequest(ex);
+                                         || policy.HasFlag(RetryEvents.BadRequest) && ApiExtensions.ShouldRetryOnBadRequest(ex)
+                                         || policy.HasFlag(RetryEvents.Aborted) && ApiExtensions.ShouldRetryOnAborted(ex)
+                                         || policy.HasFlag(RetryEvents.Timeout) && ApiExtensions.ShouldRetryOnTimeout(ex);
 
             return request.ExecuteWithRetry((Func<Exception, bool>) Result, retryAttempts, consumeTokens);
         }
@@ -295,5 +299,38 @@ namespace Lithnet.GoogleApps
 
             return false;
         }
+
+        private static bool ShouldRetryOnTimeout(Exception e)
+        {
+            if (e is TaskCanceledException || e is HttpRequestException)
+            {
+                Trace.WriteLine($"Timeout error - {e.Message} {e.StackTrace}");
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool ShouldRetryOnAborted(Exception e)
+        {
+            if (e is Google.GoogleApiException ex)
+            {
+                Trace.WriteLine($"Google API request error - {ex.Error?.Code} {ex.Error?.Message}");
+
+                if (ex.HttpStatusCode == HttpStatusCode.Conflict && ex.Message.IndexOf("The operation was aborted", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+
+            return false;
+        }
+
+         
+
+
     }
 }
