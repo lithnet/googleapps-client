@@ -138,7 +138,7 @@
                             this.CustomReplyTo = customReplyTo;
                         }
                         break;
-                        
+
                     case "customFooterText":
                         string customFooterText = info.GetString(entry.Name);
                         if (string.IsNullOrEmpty(customFooterText))
@@ -288,7 +288,7 @@
             {
                 info.AddValue("includeInGlobalAddressList", this.IncludeInGlobalAddressList.Value.ToLowerString());
             }
-            
+
             if (this.IncludeCustomFooter != null)
             {
                 info.AddValue("includeCustomFooter", this.IncludeCustomFooter.Value.ToLowerString());
@@ -389,12 +389,12 @@
             {
                 info.AddValue("spamModerationLevel", this.SpamModerationLevel);
             }
-            
+
             if (this.WhoCanAdd != null)
             {
                 info.AddValue("whoCanAdd", this.WhoCanAdd);
             }
-            
+
             if (this.WhoCanContactOwner != null)
             {
                 info.AddValue("whoCanContactOwner", this.WhoCanContactOwner);

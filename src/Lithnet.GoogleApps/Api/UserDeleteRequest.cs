@@ -37,5 +37,4 @@ namespace Lithnet.GoogleApps.Api
         [RequestParameter("userKey", RequestParameterType.Path)]
         public string UserKey { get; private set; }
     }
-
 }

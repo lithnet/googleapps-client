@@ -20,7 +20,6 @@ namespace Lithnet.GoogleApps
     {
         private readonly BaseClientServicePool<DirectoryService> directoryServicePool;
 
-
         public UserRequestFactory(GoogleServiceCredentials creds, string[] scopes, int poolSize)
         {
             this.directoryServicePool = new BaseClientServicePool<DirectoryService>(poolSize, () =>

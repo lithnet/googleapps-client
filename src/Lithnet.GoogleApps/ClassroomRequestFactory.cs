@@ -99,7 +99,6 @@ namespace Lithnet.GoogleApps
             {
                 using (PoolItem<ClassroomService> connection = this.classroomServicePool.Take(NullValueHandling.Ignore))
                 {
-
                     string token = null;
                     CoursesResource.ListRequest request = new CoursesResource.ListRequest(connection.Item)
                     {
@@ -127,13 +126,11 @@ namespace Lithnet.GoogleApps
 
                         foreach (Course item in pageResults.Courses)
                         {
-
                             GoogleCourse c = new GoogleCourse(item);
                             c.RequiresStudents = getStudents && getMembersForCourse(c.Course, skipMembersForArchived);
                             c.RequiresTeachers = getTeachers && getMembersForCourse(c.Course, skipMembersForArchived);
 
                             incomingCourses.Add(c);
-
 
                             if (c.RequiresStudents)
                             {
@@ -304,6 +301,5 @@ namespace Lithnet.GoogleApps
                 return request.ExecuteWithRetry(RetryEvents.Backoff | RetryEvents.Timeout, RetryCount);
             }
         }
-
     }
 }

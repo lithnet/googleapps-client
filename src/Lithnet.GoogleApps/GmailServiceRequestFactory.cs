@@ -13,7 +13,7 @@ using Google.Apis.Http;
 using Google.Apis.Services;
 using Delegate = Google.Apis.Gmail.v1.Data.Delegate;
 
-namespace Lithnet.GoogleApps  
+namespace Lithnet.GoogleApps
 {
     public class GmailServiceRequestFactory
     {
@@ -87,7 +87,6 @@ namespace Lithnet.GoogleApps
 
         public IEnumerable<string> GetSendAsAddresses(string id)
         {
-
             try
             {
                 id.ThrowIfNotEmailAddress();

@@ -41,7 +41,6 @@ namespace Lithnet.GoogleApps
             }
         }
 
-
         internal bool LoadedStudents { get; set; }
 
         internal bool LoadedTeachers { get; set; }

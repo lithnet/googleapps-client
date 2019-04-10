@@ -6,7 +6,6 @@ namespace Lithnet.GoogleApps.ManagedObjects
 {
     public class CourseTeachers
     {
-
         public HashSet<string> Teachers { get; set; }
 
         public int Count
@@ -27,7 +26,6 @@ namespace Lithnet.GoogleApps.ManagedObjects
             this.Teachers = teachers;
         }
 
-
         public HashSet<string> GetAllTeachers()
         {
             return this.Teachers;
@@ -42,7 +40,6 @@ namespace Lithnet.GoogleApps.ManagedObjects
                 Teacher teacher = new Teacher
                 {
                     UserId = address
-
                 };
 
                 members.Add(teacher);
@@ -50,7 +47,6 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
             return members;
         }
-
 
         public void AddTeacher(Teacher teacher)
         {
@@ -60,7 +56,6 @@ namespace Lithnet.GoogleApps.ManagedObjects
             }
 
             this.AddTeacher(teacher.UserId);
-
         }
 
         public void AddTeacher(string address)
@@ -87,7 +82,6 @@ namespace Lithnet.GoogleApps.ManagedObjects
             {
                 this.Teachers.Add(item);
             }
-
         }
     }
 }

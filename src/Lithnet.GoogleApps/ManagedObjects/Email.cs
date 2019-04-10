@@ -12,7 +12,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
 
         [JsonProperty("primary")]
         public bool? Primary { get; set; }
-      
+
         [JsonIgnore]
         public bool IsPrimary => this.Primary ?? false;
 

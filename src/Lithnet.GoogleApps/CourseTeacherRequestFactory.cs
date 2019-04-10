@@ -13,7 +13,7 @@ using static Google.Apis.Requests.BatchRequest;
 
 namespace Lithnet.GoogleApps
 {
-    public partial class CourseTeacherRequestFactory
+    public class CourseTeacherRequestFactory
     {
         private static string limiterName = "concurrent-classroom-teachers-requests";
 
@@ -24,6 +24,7 @@ namespace Lithnet.GoogleApps
         private readonly BaseClientServicePool<ClassroomService> classRoomServicePool;
 
         private readonly TimeSpan DefaultTimeout = new TimeSpan(0, 2, 0);
+
         public int RetryCount { get; set; } = 5;
 
         internal CourseTeacherRequestFactory(BaseClientServicePool<ClassroomService> classroomServicePool)
@@ -98,7 +99,6 @@ namespace Lithnet.GoogleApps
             Teacher teacher = new Teacher();
 
             teacher.UserId = teacherId;
-            
 
             this.AddTeacher(courseId, teacher, throwOnExistingTeacher);
         }
@@ -135,7 +135,6 @@ namespace Lithnet.GoogleApps
                 this.ReleaseGate();
             }
         }
-
 
         public void RemoveTeacher(string courseId, string userId)
         {
@@ -215,9 +214,9 @@ namespace Lithnet.GoogleApps
             }
         }
 
-        private void ProcessBatches<T>(string id, bool ignoreExistingTeacher, bool ignoreMissingTeacher, IList<ClientServiceRequest<T>> requests, PoolItem<ClassroomService> poolService, Func<ProcessBatchHelper<T>, OnResponse<CoursesResource.TeachersResource>> onResponse)
+        private void ProcessBatches<T>(string id, bool ignoreExistingTeacher, bool ignoreMissingTeacher, IList<ClientServiceRequest<T>> requests, PoolItem<ClassroomService> poolService, Func<CourseTeacherRequestBatchHelper<T>, OnResponse<CoursesResource.TeachersResource>> onResponse)
         {
-            ProcessBatchHelper<T> batchHelper = new ProcessBatchHelper<T>()
+            CourseTeacherRequestBatchHelper<T> batchHelper = new CourseTeacherRequestBatchHelper<T>()
             {
                 FailedTeachers = new List<string>(),
                 Failures = new List<Exception>(),
@@ -285,7 +284,6 @@ namespace Lithnet.GoogleApps
 
         private void ProcessTeacherResponse<T>(string id, string teacherKey, bool ignoreExistingTeacher, bool ignoreMissingTeacher, RequestError error, HttpResponseMessage message, Dictionary<string, ClientServiceRequest<T>> requestsToRetry, ClientServiceRequest<T> request, List<string> failedTeachers, List<Exception> failures)
         {
-           
             string requestType = request.GetType().Name;
 
             if (error == null)
@@ -365,7 +363,6 @@ namespace Lithnet.GoogleApps
             }
         }
 
-       
         private bool IsExistingTeacherError(HttpStatusCode statusCode, string message)
         {
             if (statusCode == HttpStatusCode.Conflict)

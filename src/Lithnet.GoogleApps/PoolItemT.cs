@@ -2,7 +2,7 @@
 
 namespace Lithnet.GoogleApps
 {
-    public class PoolItem<T> : IDisposable 
+    public class PoolItem<T> : IDisposable
     {
         private readonly Pool<T> containingPool;
 

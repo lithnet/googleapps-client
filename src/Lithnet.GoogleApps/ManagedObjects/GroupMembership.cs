@@ -28,10 +28,10 @@ namespace Lithnet.GoogleApps.ManagedObjects
             get
             {
                 return this.Members.Count +
-                    this.ExternalMembers.Count + 
-                    this.Managers.Count + 
-                    this.ExternalManagers.Count + 
-                    this.Owners.Count + 
+                    this.ExternalMembers.Count +
+                    this.Managers.Count +
+                    this.ExternalManagers.Count +
+                    this.Owners.Count +
                     this.ExternalOwners.Count;
             }
         }

@@ -11,12 +11,12 @@ using Google.GData.Contacts;
 
 namespace Lithnet.GoogleApps
 {
-    internal class RateLimiter
+    public static class RateLimiter
     {
         private static Dictionary<string, TokenBucket> buckets;
 
         private static Dictionary<string, SemaphoreSlim> semaphores;
-        
+
         static RateLimiter()
         {
             buckets = new Dictionary<string, TokenBucket>();
@@ -56,14 +56,12 @@ namespace Lithnet.GoogleApps
 
         private static void SetDefaultRateLimits()
         {
-        
             RateLimiter.SetRateLimit(new DirectoryService().Name, 1500, new TimeSpan(0, 0, 100));
             RateLimiter.SetRateLimit(new GroupssettingsService().Name, 500, new TimeSpan(0, 0, 100));
             RateLimiter.SetRateLimit(new CalendarService().Name, 1500, new TimeSpan(0, 0, 100));
             RateLimiter.SetRateLimit(new GmailService().Name, 250, new TimeSpan(0, 0, 1));
             RateLimiter.SetRateLimit(typeof(ContactsService).Name, 1500, new TimeSpan(0, 0, 100));
-            RateLimiter.SetRateLimit(new ClassroomService().Name, 48, new TimeSpan(0, 0, 10));
-
+            RateLimiter.SetRateLimit(new ClassroomService().Name, 5, new TimeSpan(0, 0, 1));
         }
 
         internal static TokenBucket GetOrCreateBucket(string name)
