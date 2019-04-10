@@ -61,7 +61,7 @@ namespace Lithnet.GoogleApps
             RateLimiter.SetRateLimit(new CalendarService().Name, 1500, new TimeSpan(0, 0, 100));
             RateLimiter.SetRateLimit(new GmailService().Name, 250, new TimeSpan(0, 0, 1));
             RateLimiter.SetRateLimit(typeof(ContactsService).Name, 1500, new TimeSpan(0, 0, 100));
-            RateLimiter.SetRateLimit(new ClassroomService().Name, 5, new TimeSpan(0, 0, 1));
+            RateLimiter.SetRateLimit(new ClassroomService().Name, 50, new TimeSpan(0, 0, 10));
         }
 
         internal static TokenBucket GetOrCreateBucket(string name)
