@@ -101,6 +101,9 @@
         [JsonProperty("whoCanViewMembership")]
         public string WhoCanViewMembership { get; set; }
 
+        [JsonProperty("whoCanModerateMembers")]
+        public string WhoCanModerateMembers { get; set; }
+
         public GroupSettings()
         {
         }
@@ -257,6 +260,10 @@
 
                     case "showInGroupDirectory":
                         this.ShowInGroupDirectory = info.GetString(entry.Name).ToNullableBool();
+                        break;
+
+                    case "whoCanModerateMembers":
+                        this.WhoCanModerateMembers = info.GetString(entry.Name);
                         break;
                 }
             }
@@ -428,6 +435,11 @@
             if (this.WhoCanViewMembership != null)
             {
                 info.AddValue("whoCanViewMembership", this.WhoCanViewMembership);
+            }
+
+            if (this.WhoCanModerateMembers != null)
+            {
+                info.AddValue("whoCanModerateMembers", this.WhoCanModerateMembers);
             }
         }
     }
