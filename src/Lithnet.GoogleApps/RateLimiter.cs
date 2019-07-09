@@ -17,6 +17,8 @@ namespace Lithnet.GoogleApps
 
         private static Dictionary<string, SemaphoreSlim> semaphores;
 
+        private static object lockObject = new object();
+
         static RateLimiter()
         {
             buckets = new Dictionary<string, TokenBucket>();
@@ -66,35 +68,44 @@ namespace Lithnet.GoogleApps
 
         internal static TokenBucket GetOrCreateBucket(string name)
         {
-            if (!RateLimiter.buckets.ContainsKey(name))
+            lock (lockObject)
             {
-                RateLimiter.SetRateLimit(name, 1500, new TimeSpan(0, 0, 100));
-            }
+                if (!RateLimiter.buckets.ContainsKey(name))
+                {
+                    RateLimiter.SetRateLimit(name, 1500, new TimeSpan(0, 0, 100));
+                }
 
-            return RateLimiter.buckets[name];
+                return RateLimiter.buckets[name];
+            }
         }
 
         private static void SetRateLimit(string serviceName, int requestsPerInterval, TimeSpan refillInterval)
         {
-            if (!RateLimiter.buckets.ContainsKey(serviceName))
+            lock (lockObject)
             {
-                RateLimiter.buckets.Add(serviceName, new TokenBucket(serviceName, requestsPerInterval, refillInterval, requestsPerInterval));
-            }
-            else
-            {
-                RateLimiter.buckets[serviceName] = new TokenBucket(serviceName, requestsPerInterval, refillInterval, requestsPerInterval);
+                if (!RateLimiter.buckets.ContainsKey(serviceName))
+                {
+                    RateLimiter.buckets.Add(serviceName, new TokenBucket(serviceName, requestsPerInterval, refillInterval, requestsPerInterval));
+                }
+                else
+                {
+                    RateLimiter.buckets[serviceName] = new TokenBucket(serviceName, requestsPerInterval, refillInterval, requestsPerInterval);
+                }
             }
         }
 
         internal static void SetConcurrentLimit(string serviceName, int maxConcurrentOperations)
         {
-            if (!semaphores.ContainsKey(serviceName))
+            lock (lockObject)
             {
-                semaphores.Add(serviceName, new SemaphoreSlim(maxConcurrentOperations, maxConcurrentOperations));
-            }
-            else
-            {
-                semaphores[serviceName] = new SemaphoreSlim(maxConcurrentOperations, maxConcurrentOperations);
+                if (!semaphores.ContainsKey(serviceName))
+                {
+                    semaphores.Add(serviceName, new SemaphoreSlim(maxConcurrentOperations, maxConcurrentOperations));
+                }
+                else
+                {
+                    semaphores[serviceName] = new SemaphoreSlim(maxConcurrentOperations, maxConcurrentOperations);
+                }
             }
         }
 

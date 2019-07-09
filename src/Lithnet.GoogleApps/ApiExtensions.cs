@@ -47,7 +47,7 @@ namespace Lithnet.GoogleApps
 
                     RateLimiter.GetOrCreateBucket(serviceName).Consume(request.Count * consumeTokens);
 
-                    request.ExecuteAsync().Wait();
+                    request.ExecuteAsync().GetAwaiter().GetResult();
                     break;
                 }
                 catch (Google.GoogleApiException ex)
@@ -121,7 +121,7 @@ namespace Lithnet.GoogleApps
                     attemptCount++;
 
                     RateLimiter.GetOrCreateBucket(request.Service.Name).Consume(consumeTokens);
-                    return request.Execute();
+                    return request.ExecuteAsync().GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
                 {
