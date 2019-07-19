@@ -122,6 +122,7 @@
     <Compile Include="Settings.cs" />
     <Compile Include="TokenBucket.cs" />
     <Compile Include="ResourcesRequestFactory.cs" />
+    <Compile Include="ChromeDeviceRequestFactory.cs" />
     <Compile Include="UserRequestFactory.cs" />
     <Compile Include="ContactRequestFactory.cs" />
     <Compile Include="GmailServiceRequestFactory.cs" />

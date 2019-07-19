@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -13,17 +14,15 @@ namespace Lithnet.GoogleApps
 {
     public static class RateLimiter
     {
-        private static Dictionary<string, TokenBucket> buckets;
+        private static ConcurrentDictionary<string, TokenBucket> buckets;
 
-        private static Dictionary<string, SemaphoreSlim> semaphores;
-
-        private static object lockObject = new object();
+        private static ConcurrentDictionary<string, SemaphoreSlim> semaphores;
 
         static RateLimiter()
         {
-            buckets = new Dictionary<string, TokenBucket>();
-            semaphores = new Dictionary<string, SemaphoreSlim>();
-            SetDefaultRateLimits();
+            RateLimiter.buckets = new ConcurrentDictionary<string, TokenBucket>();
+            RateLimiter.semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
+            RateLimiter.SetDefaultRateLimits();
         }
 
         public static void SetRateLimitDirectoryService(int requestsPerInterval, TimeSpan interval)
@@ -66,47 +65,21 @@ namespace Lithnet.GoogleApps
             RateLimiter.SetRateLimit(new ClassroomService().Name, 5, new TimeSpan(0, 0, 1));
         }
 
-        internal static TokenBucket GetOrCreateBucket(string name)
+        internal static TokenBucket GetOrCreateBucket(string serviceName)
         {
-            lock (lockObject)
-            {
-                if (!RateLimiter.buckets.ContainsKey(name))
-                {
-                    RateLimiter.SetRateLimit(name, 1500, new TimeSpan(0, 0, 100));
-                }
-
-                return RateLimiter.buckets[name];
-            }
+            return RateLimiter.buckets.GetOrAdd(serviceName, new TokenBucket(serviceName, 1500, new TimeSpan(0, 0, 100), 1500));
         }
 
         private static void SetRateLimit(string serviceName, int requestsPerInterval, TimeSpan refillInterval)
         {
-            lock (lockObject)
-            {
-                if (!RateLimiter.buckets.ContainsKey(serviceName))
-                {
-                    RateLimiter.buckets.Add(serviceName, new TokenBucket(serviceName, requestsPerInterval, refillInterval, requestsPerInterval));
-                }
-                else
-                {
-                    RateLimiter.buckets[serviceName] = new TokenBucket(serviceName, requestsPerInterval, refillInterval, requestsPerInterval);
-                }
-            }
+            RateLimiter.buckets.AddOrUpdate(serviceName, new TokenBucket(serviceName, requestsPerInterval, refillInterval, requestsPerInterval),
+                 (__, _) => new TokenBucket(serviceName, requestsPerInterval, refillInterval, requestsPerInterval));
         }
 
         internal static void SetConcurrentLimit(string serviceName, int maxConcurrentOperations)
         {
-            lock (lockObject)
-            {
-                if (!semaphores.ContainsKey(serviceName))
-                {
-                    semaphores.Add(serviceName, new SemaphoreSlim(maxConcurrentOperations, maxConcurrentOperations));
-                }
-                else
-                {
-                    semaphores[serviceName] = new SemaphoreSlim(maxConcurrentOperations, maxConcurrentOperations);
-                }
-            }
+            RateLimiter.semaphores.AddOrUpdate(serviceName, new SemaphoreSlim(maxConcurrentOperations, maxConcurrentOperations),
+                (__, _) => new SemaphoreSlim(maxConcurrentOperations, maxConcurrentOperations));
         }
 
         internal static void WaitForGate(string serviceName)
@@ -115,11 +88,11 @@ namespace Lithnet.GoogleApps
             {
                 return;
             }
-
-            if (semaphores.ContainsKey(serviceName))
+            
+            if (RateLimiter.semaphores.ContainsKey(serviceName))
             {
                 Trace.WriteLine($"Waiting for semaphore for service {serviceName}");
-                semaphores[serviceName].Wait();
+                RateLimiter.semaphores[serviceName].Wait();
                 Trace.WriteLine($"Got semaphore for service {serviceName}");
             }
         }
@@ -131,11 +104,11 @@ namespace Lithnet.GoogleApps
                 return;
             }
 
-            if (semaphores.ContainsKey(serviceName))
+            if (RateLimiter.semaphores.ContainsKey(serviceName))
             {
                 try
                 {
-                    semaphores[serviceName].Release();
+                    RateLimiter.semaphores[serviceName].Release();
                     Trace.WriteLine($"Released semaphore for service {serviceName}");
                 }
                 catch (SemaphoreFullException)
