@@ -1,16 +1,13 @@
-﻿namespace Lithnet.GoogleApps.ManagedObjects
-{
-    using Google.Apis.Requests;
-    using Newtonsoft.Json;
-    using System.Runtime.Serialization;
+﻿using Google.Apis.Requests;
+using Newtonsoft.Json;
+using System.Runtime.Serialization;
 
+namespace Lithnet.GoogleApps.ManagedObjects
+{
     public class GroupSettings : IDirectResponseSchema, ISerializable
     {
         [JsonProperty("allowExternalMembers")]
         public bool? AllowExternalMembers { get; set; }
-
-        [JsonProperty("allowGoogleCommunication")]
-        public bool? AllowGoogleCommunication { get; set; }
 
         [JsonProperty("allowWebPosting")]
         public bool? AllowWebPosting { get; set; }
@@ -47,14 +44,8 @@
         [JsonProperty("kind"), JsonConverter(typeof(JsonNullStringConverter))]
         public string Kind { get; set; }
 
-        [JsonProperty("maxMessageBytes")]
-        public int? MaxMessageBytes { get; set; }
-
         [JsonProperty("membersCanPostAsTheGroup")]
         public bool? MembersCanPostAsTheGroup { get; set; }
-
-        [JsonProperty("messageDisplayFont"), JsonConverter(typeof(JsonNullStringConverter))]
-        public string MessageDisplayFont { get; set; }
 
         [JsonProperty("messageModerationLevel"), JsonConverter(typeof(JsonNullStringConverter))]
         public string MessageModerationLevel { get; set; }
@@ -71,20 +62,11 @@
         [JsonProperty("sendMessageDenyNotification")]
         public bool? SendMessageDenyNotification { get; set; }
 
-        [JsonProperty("showInGroupDirectory")]
-        public bool? ShowInGroupDirectory { get; set; }
-
         [JsonProperty("spamModerationLevel")]
         public string SpamModerationLevel { get; set; }
 
         [JsonProperty("whoCanContactOwner")]
         public string WhoCanContactOwner { get; set; }
-
-        [JsonProperty("whoCanInvite")]
-        public string WhoCanInvite { get; set; }
-
-        [JsonProperty("whoCanAdd")]
-        public string WhoCanAdd { get; set; }
 
         [JsonProperty("whoCanJoin")]
         public string WhoCanJoin { get; set; }
@@ -104,6 +86,18 @@
         [JsonProperty("whoCanModerateMembers")]
         public string WhoCanModerateMembers { get; set; }
 
+        [JsonProperty("whoCanModerateContent")]
+        public string WhoCanModerateContent { get; set; }
+
+        [JsonProperty("whoCanAssistContent")]
+        public string WhoCanAssistContent { get; set; }
+
+        [JsonProperty("whoCanDiscoverGroup")]
+        public string WhoCanDiscoverGroup { get; set; }
+
+        [JsonProperty("enableCollaborativeInbox")]
+        public bool? EnableCollaborativeInbox { get; set; }
+
         public GroupSettings()
         {
         }
@@ -118,8 +112,8 @@
                         this.AllowExternalMembers = info.GetString(entry.Name).ToNullableBool();
                         break;
 
-                    case "allowGoogleCommunication":
-                        this.AllowGoogleCommunication = info.GetString(entry.Name).ToNullableBool();
+                    case "enableCollaborativeInbox":
+                        this.EnableCollaborativeInbox = info.GetString(entry.Name).ToNullableBool();
                         break;
 
                     case "allowWebPosting":
@@ -178,10 +172,6 @@
                         this.Kind = info.GetString(entry.Name);
                         break;
 
-                    case "messageDisplayFont":
-                        this.MessageDisplayFont = info.GetString(entry.Name);
-                        break;
-
                     case "messageModerationLevel":
                         this.MessageModerationLevel = info.GetString(entry.Name);
                         break;
@@ -202,16 +192,8 @@
                         this.SpamModerationLevel = info.GetString(entry.Name);
                         break;
 
-                    case "whoCanAdd":
-                        this.WhoCanAdd = info.GetString(entry.Name);
-                        break;
-
                     case "whoCanContactOwner":
                         this.WhoCanContactOwner = info.GetString(entry.Name);
-                        break;
-
-                    case "whoCanInvite":
-                        this.WhoCanInvite = info.GetString(entry.Name);
                         break;
 
                     case "whoCanJoin":
@@ -246,10 +228,6 @@
                         this.IsArchived = info.GetString(entry.Name).ToNullableBool();
                         break;
 
-                    case "maxMessageBytes":
-                        this.MaxMessageBytes = info.GetInt32(entry.Name);
-                        break;
-
                     case "membersCanPostAsTheGroup":
                         this.MembersCanPostAsTheGroup = info.GetString(entry.Name).ToNullableBool();
                         break;
@@ -258,12 +236,20 @@
                         this.SendMessageDenyNotification = info.GetString(entry.Name).ToNullableBool();
                         break;
 
-                    case "showInGroupDirectory":
-                        this.ShowInGroupDirectory = info.GetString(entry.Name).ToNullableBool();
-                        break;
-
                     case "whoCanModerateMembers":
                         this.WhoCanModerateMembers = info.GetString(entry.Name);
+                        break;
+
+                    case "whoCanModerateContent":
+                        this.WhoCanModerateContent = info.GetString(entry.Name);
+                        break;
+
+                    case "whoCanAssistContent":
+                        this.WhoCanAssistContent = info.GetString(entry.Name);
+                        break;
+
+                    case "whoCanDiscoverGroup":
+                        this.WhoCanDiscoverGroup = info.GetString(entry.Name);
                         break;
                 }
             }
@@ -276,9 +262,9 @@
                 info.AddValue("allowExternalMembers", this.AllowExternalMembers.Value.ToLowerString());
             }
 
-            if (this.AllowGoogleCommunication != null)
+            if (this.EnableCollaborativeInbox != null)
             {
-                info.AddValue("allowGoogleCommunication", this.AllowGoogleCommunication.Value.ToLowerString());
+                info.AddValue("enableCollaborativeInbox", this.EnableCollaborativeInbox.Value.ToLowerString());
             }
 
             if (this.AllowWebPosting != null)
@@ -314,11 +300,6 @@
             if (this.SendMessageDenyNotification != null)
             {
                 info.AddValue("sendMessageDenyNotification", this.SendMessageDenyNotification.Value.ToLowerString());
-            }
-
-            if (this.ShowInGroupDirectory != null)
-            {
-                info.AddValue("showInGroupDirectory", this.ShowInGroupDirectory.Value.ToLowerString());
             }
 
             if (this.CustomReplyTo != null)
@@ -362,16 +343,6 @@
                 info.AddValue("description", this.Description);
             }
 
-            if (this.MaxMessageBytes != null)
-            {
-                info.AddValue("maxMessageBytes", this.MaxMessageBytes.Value);
-            }
-
-            if (this.MessageDisplayFont != null)
-            {
-                info.AddValue("messageDisplayFont", this.MessageDisplayFont);
-            }
-
             if (this.MessageModerationLevel != null)
             {
                 info.AddValue("messageModerationLevel", this.MessageModerationLevel);
@@ -397,19 +368,9 @@
                 info.AddValue("spamModerationLevel", this.SpamModerationLevel);
             }
 
-            if (this.WhoCanAdd != null)
-            {
-                info.AddValue("whoCanAdd", this.WhoCanAdd);
-            }
-
             if (this.WhoCanContactOwner != null)
             {
                 info.AddValue("whoCanContactOwner", this.WhoCanContactOwner);
-            }
-
-            if (this.WhoCanInvite != null)
-            {
-                info.AddValue("whoCanInvite", this.WhoCanInvite);
             }
 
             if (this.WhoCanJoin != null)
@@ -440,6 +401,21 @@
             if (this.WhoCanModerateMembers != null)
             {
                 info.AddValue("whoCanModerateMembers", this.WhoCanModerateMembers);
+            }
+
+            if (this.WhoCanModerateContent != null)
+            {
+                info.AddValue("whoCanModerateContent", this.WhoCanModerateContent);
+            }
+
+            if (this.WhoCanAssistContent != null)
+            {
+                info.AddValue("whoCanAssistContent", this.WhoCanAssistContent);
+            }
+
+            if (this.WhoCanDiscoverGroup != null)
+            {
+                info.AddValue("whoCanDiscoverGroup", this.WhoCanDiscoverGroup);
             }
         }
     }
