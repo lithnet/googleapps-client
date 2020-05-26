@@ -82,7 +82,7 @@ namespace Lithnet.GoogleApps
             GmailService service = this.GetService(id);
             UsersResource.SettingsResource.DelegatesResource.ListRequest request = service.Users.Settings.Delegates.List(id);
             ListDelegatesResponse result = request.ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount);
-            return result.Delegates?.Select(t => t.DelegateEmail) ?? new List<string>();
+            return result?.Delegates?.Select(t => t.DelegateEmail) ?? new List<string>();
         }
 
         public IEnumerable<string> GetSendAsAddresses(string id)
@@ -94,7 +94,7 @@ namespace Lithnet.GoogleApps
                 GmailService service = this.GetService(id);
                 UsersResource.SettingsResource.SendAsResource.ListRequest request = service.Users.Settings.SendAs.List(id);
                 ListSendAsResponse result = request.ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound | RetryEvents.Timeout, this.RetryCount);
-                return result.SendAs?.Select(t => t.SendAsEmail) ?? new List<string>();
+                return result?.SendAs?.Select(t => t.SendAsEmail) ?? new List<string>();
             }
             catch(GoogleApiException ex)
             {
@@ -118,7 +118,7 @@ namespace Lithnet.GoogleApps
                 GmailService service = this.GetService(id);
                 UsersResource.SettingsResource.SendAsResource.ListRequest request = service.Users.Settings.SendAs.List(id);
                 ListSendAsResponse result = request.ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound | RetryEvents.Timeout, this.RetryCount);
-                return result.SendAs ?? new List<SendAs>();
+                return result?.SendAs ?? new List<SendAs>();
             }
             catch (GoogleApiException ex)
             {
@@ -159,7 +159,7 @@ namespace Lithnet.GoogleApps
             GmailService service = this.GetService(id);
             ListDelegatesResponse result = service.Users.Settings.Delegates.List(id).ExecuteWithRetry(RetryEvents.BackoffOAuthNotFound, this.RetryCount);
 
-            if (result.Delegates != null)
+            if (result?.Delegates != null)
             {
                 foreach (Delegate item in result.Delegates)
                 {
@@ -175,7 +175,7 @@ namespace Lithnet.GoogleApps
             GmailService service = this.GetService(id);
             ListSendAsResponse result = service.Users.Settings.SendAs.List(id).ExecuteWithRetry(RetryEvents.BackoffOAuth, this.RetryCount);
 
-            if (result.SendAs != null)
+            if (result?.SendAs != null)
             {
                 foreach (SendAs item in result.SendAs.Where(t => !t.IsPrimary ?? false))
                 {

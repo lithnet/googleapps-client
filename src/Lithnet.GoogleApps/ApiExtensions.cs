@@ -230,6 +230,11 @@ namespace Lithnet.GoogleApps
 
         public static void ThrowIfNotEmailAddress(this string email)
         {
+            if (email == null)
+            {
+                throw new ArgumentNullException(nameof(email)); 
+            }
+
             if (email.IndexOf("@", StringComparison.Ordinal) < 0)
             {
                 throw new ArgumentException("Mail argument must be a valid email address");
