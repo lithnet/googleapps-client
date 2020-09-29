@@ -17,7 +17,7 @@ namespace Lithnet.GoogleApps
     {
         private static string limiterName = "concurrent-classroom-teachers-requests";
 
-        public static int BatchSize { get; set; } = 100;
+        public static int BatchSize { get; set; } = 50;
 
         public static int ConcurrentOperationLimitDefault { get; set; } = 100;
 
