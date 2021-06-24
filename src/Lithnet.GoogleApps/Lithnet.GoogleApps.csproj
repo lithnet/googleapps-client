@@ -62,6 +62,9 @@
     <Compile Include="CourseStudentRequestBatchHelperT.cs" />
     <Compile Include="CourseTeacherRequestFactory.cs" />
     <Compile Include="CourseTeacherRequestBatchHelperT.cs" />
+    <Compile Include="ManagedObjects\Keyword.cs" />
+    <Compile Include="ManagedObjects\Location.cs" />
+    <Compile Include="ManagedObjects\Gender.cs" />
     <Compile Include="OrgUnitsRequestFactory.cs" />
     <Compile Include="GoogleCourse.cs" />
     <Compile Include="GoogleServiceCredentials.cs" />

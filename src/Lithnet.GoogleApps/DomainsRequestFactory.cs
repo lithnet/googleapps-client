@@ -27,7 +27,7 @@ namespace Lithnet.GoogleApps
                     Serializer = new GoogleJsonSerializer(),
                     DefaultExponentialBackOffPolicy = ExponentialBackOffPolicy.None,
                 });
-
+                
                 x.HttpClient.Timeout = Timeout.InfiniteTimeSpan;
                 return x;
             });

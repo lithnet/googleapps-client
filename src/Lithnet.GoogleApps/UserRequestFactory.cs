@@ -64,7 +64,7 @@ namespace Lithnet.GoogleApps
                     request.Projection = ProjectionEnum.Full;
                     request.Fields = fields;
                 }
-
+                
                 request.Query = query;
                 request.PrettyPrint = false;
 

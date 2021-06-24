@@ -23,7 +23,7 @@ namespace Lithnet.GoogleApps.ManagedObjects
                 }
                 else
                 {
-                    throw new ArgumentException("Type {value} is not a supported type for this object");
+                    throw new ArgumentException($"Type {value} is not a supported type for this object");
                 }
             }
         }

@@ -164,7 +164,17 @@
 
         public string ThumbnailPhotoUrl { get; private set; }
 
+        public string RecoveryEmail { get; set; }
+
+        public string RecoveryPhone { get; set; }
+
         public List<Website> Websites { get; set; }
+
+        public List<Location> Locations { get; set; }
+
+        public List<Keyword> Keywords { get; set; }
+
+        public Gender Gender { get; set; }
 
         internal bool Creating { get; }
 
@@ -273,6 +283,10 @@
                         this.Name = (UserName)info.GetValue(entry.Name, typeof(UserName));
                         break;
 
+                    case "gender":
+                        this.Gender = (Gender)info.GetValue(entry.Name, typeof(Gender));
+                        break;
+
                     case "nonEditableAliases":
                         this.NonEditableAliasesInternal = (List<string>)info.GetValue(entry.Name, typeof(List<string>));
                         break;
@@ -293,8 +307,24 @@
                         this.Phones = (List<Phone>)info.GetValue(entry.Name, typeof(List<Phone>));
                         break;
 
+                    case "recoveryEmail":
+                        this.RecoveryEmail = info.GetString(entry.Name);
+                        break;
+
+                    case "recoveryPhone":
+                        this.RecoveryPhone = info.GetString(entry.Name);
+                        break;
+
                     case "websites":
                         this.Websites = (List<Website>)info.GetValue(entry.Name, typeof(List<Website>));
+                        break;
+
+                    case "locations":
+                        this.Locations = (List<Location>)info.GetValue(entry.Name, typeof(List<Location>));
+                        break;
+
+                    case "keywords":
+                        this.Keywords = (List<Keyword>)info.GetValue(entry.Name, typeof(List<Keyword>));
                         break;
 
                     case "relations":
@@ -379,9 +409,24 @@
                 info.AddValue("kind", this.Kind);
             }
 
+            if (this.RecoveryEmail != null)
+            {
+                info.AddValue("recoveryEmail", this.RecoveryEmail);
+            }
+
+            if (this.RecoveryPhone != null)
+            {
+                info.AddValue("recoveryPhone", this.RecoveryPhone);
+            }
+
             if (this.Name != null)
             {
                 info.AddValue("name", this.Name);
+            }
+
+            if (this.Gender != null)
+            {
+                info.AddValue("gender", this.Gender);
             }
 
             if (this.Notes != null)
@@ -440,6 +485,16 @@
             if (this.Websites != null)
             {
                 info.AddValue("websites", this.Websites);
+            }
+
+            if (this.Locations != null)
+            {
+                info.AddValue("locations", this.Locations);
+            }
+
+            if (this.Keywords != null)
+            {
+                info.AddValue("keywords", this.Keywords);
             }
         }
     }

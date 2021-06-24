@@ -44,7 +44,7 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
-                var request = new OrgunitsResource.GetRequest(connection.Item, customerID, new Google.Apis.Util.Repeatable<string>(new[] { orgUnit }));
+                var request = new OrgunitsResource.GetRequest(connection.Item, customerID, orgUnit);
 
                 return request.ExecuteWithRetryOnBackoff();
             }
