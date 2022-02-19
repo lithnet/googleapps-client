@@ -127,13 +127,13 @@ namespace Lithnet.GoogleApps.ManagedObjects
         {
             GroupMembership.internalDomains = new List<string>();
 
-            foreach (Domain domain in factory.List(customerID).Domains)
+            foreach (G.Domains domain in factory.List(customerID).Domains)
             {
                 GroupMembership.internalDomains.Add(domain.DomainName);
 
                 if (domain.DomainAliases != null)
                 {
-                    foreach (DomainAlias alias in domain.DomainAliases)
+                    foreach (G.DomainAlias alias in domain.DomainAliases)
                     {
                         GroupMembership.internalDomains.Add(alias.DomainAliasName);
                     }

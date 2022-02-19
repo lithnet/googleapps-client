@@ -41,7 +41,7 @@ namespace Lithnet.GoogleApps.Api
 
         public override string MethodName => "undelete";
 
-        public override string RestPath => "users/{userKey}/undelete";
+        public override string RestPath => "admin/directory/v1/users/{userKey}/undelete";
 
         [RequestParameter("userKey", RequestParameterType.Path)]
         public string UserKey { get; set; }

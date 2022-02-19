@@ -167,7 +167,7 @@ namespace Lithnet.GoogleApps.Api
         [RequestParameter("query", RequestParameterType.Query)]
         public string Query { get; set; }
 
-        public override string RestPath => "users";
+        public override string RestPath => "admin/directory/v1/users";
 
         [RequestParameter("showDeleted", RequestParameterType.Query)]
         public string ShowDeleted { get; set; }

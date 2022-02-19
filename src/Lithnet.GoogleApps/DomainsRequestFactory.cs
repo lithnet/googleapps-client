@@ -1,13 +1,10 @@
-﻿using System;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using Newtonsoft.Json;
-using Lithnet.GoogleApps.Api;
-using Lithnet.GoogleApps.ManagedObjects;
+﻿using System.Threading;
 using Google.Apis.Admin.Directory.directory_v1;
+using Google.Apis.Admin.Directory.directory_v1.Data;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Http;
 using Google.Apis.Services;
+using Newtonsoft.Json;
 
 namespace Lithnet.GoogleApps
 {
@@ -33,21 +30,21 @@ namespace Lithnet.GoogleApps
             });
         }
 
-        public DomainList List(string customerID)
+        public Domains2 List(string customerID)
         {
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
-                DomainListRequest request = new DomainListRequest(connection.Item, customerID);
+                DomainsResource.ListRequest request = new DomainsResource.ListRequest(connection.Item, customerID);
 
                 return request.ExecuteWithRetryOnBackoff();
             }
         }
 
-        public Domain Get(string customerID, string domain)
+        public Domains Get(string customerID, string domain)
         {
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
-                DomainGetRequest request = new DomainGetRequest(connection.Item, domain, customerID);
+                DomainsResource.GetRequest request = new DomainsResource.GetRequest(connection.Item, customerID, domain);
 
                 return request.ExecuteWithRetryOnBackoff();
             }
@@ -57,16 +54,16 @@ namespace Lithnet.GoogleApps
         {
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
-                DomainDeleteRequest request = new DomainDeleteRequest(connection.Item, domain, customerID);
+                DomainsResource.DeleteRequest request = new DomainsResource.DeleteRequest(connection.Item, customerID, domain);
                 request.ExecuteWithRetryOnBackoff();
             }
         }
 
-        public Domain Insert(string customerID, Domain domain)
+        public Domains Insert(string customerID, Domains domain)
         {
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
-                DomainInsertRequest request = new DomainInsertRequest(connection.Item, customerID, domain);
+                DomainsResource.InsertRequest request = new DomainsResource.InsertRequest(connection.Item, domain, customerID);
                 return request.ExecuteWithRetryOnBackoff();
             }
         }

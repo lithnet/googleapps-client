@@ -158,6 +158,8 @@
 
         public bool? Suspended { get; set; }
 
+        public bool? Archived { get; set; }
+
         public string SuspensionReason { get; private set; }
 
         public string ThumbnailPhotoEtag { get; private set; }
@@ -335,6 +337,10 @@
                         this.Suspended = info.GetBoolean(entry.Name);
                         break;
 
+                    case "archived":
+                        this.Archived = info.GetBoolean(entry.Name);
+                        break;
+
                     case "suspensionReason":
                         this.SuspensionReason = info.GetString(entry.Name);
                         break;
@@ -362,6 +368,11 @@
             if (this.Suspended.HasValue)
             {
                 info.AddValue("suspended", this.Suspended.Value);
+            }
+
+            if (this.Archived.HasValue)
+            {
+                info.AddValue("archived", this.Archived.Value);
             }
 
             if (this.ExternalIds != null)

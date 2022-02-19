@@ -24,6 +24,6 @@ namespace Lithnet.GoogleApps.Api
 
         public override string MethodName => "insert";
 
-        public override string RestPath => "users";
+        public override string RestPath => "admin/directory/v1/users";
     }
 }

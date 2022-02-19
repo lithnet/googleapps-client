@@ -32,7 +32,7 @@ namespace Lithnet.GoogleApps.Api
 
         public override string MethodName => "delete";
 
-        public override string RestPath => "users/{userKey}";
+        public override string RestPath => "admin/directory/v1/users/{userKey}";
 
         [RequestParameter("userKey", RequestParameterType.Path)]
         public string UserKey { get; private set; }

@@ -43,7 +43,7 @@ namespace Lithnet.GoogleApps.Api
 
         public override string MethodName => "makeAdmin";
 
-        public override string RestPath => "users/{userKey}/makeAdmin";
+        public override string RestPath => "admin/directory/v1/users/{userKey}/makeAdmin";
 
         [RequestParameter("userKey", RequestParameterType.Path)]
         public string UserKey { get; private set; }

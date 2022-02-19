@@ -45,7 +45,7 @@ namespace Lithnet.GoogleApps.Api
 
         public override string MethodName => "list";
 
-        public override string RestPath => "users/{userKey}/aliases";
+        public override string RestPath => "admin/directory/v1/users/{userKey}/aliases";
 
         [RequestParameter("userKey", RequestParameterType.Path)]
         public string UserKey { get; private set; }

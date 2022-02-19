@@ -66,7 +66,7 @@ namespace Lithnet.GoogleApps.Api
         [RequestParameter("projection", RequestParameterType.Query)]
         public ProjectionEnum? Projection { get; set; }
 
-        public override string RestPath => "users/{userKey}";
+        public override string RestPath => "admin/directory/v1/users/{userKey}";
 
         [RequestParameter("userKey", RequestParameterType.Path)]
         public string UserKey { get; private set; }

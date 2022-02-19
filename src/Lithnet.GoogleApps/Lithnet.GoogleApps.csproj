@@ -46,8 +46,7 @@
     <Compile Include="AggregateCourseStudentUpdateException.cs" />
     <Compile Include="AggregateGroupUpdateException.cs" />
     <Compile Include="ApiExtensions.cs" />
-    <Compile Include="Api\DomainInsertRequest.cs" />
-    <Compile Include="Api\DomainDeleteRequest.cs" />
+    <Compile Include="Api\RequestWrapper.cs" />
     <Compile Include="Api\Enums\OrderByEnum.cs" />
     <Compile Include="Api\Enums\ProjectionEnum.cs" />
     <Compile Include="Api\Enums\SortOrderEnum.cs" />
@@ -62,6 +61,7 @@
     <Compile Include="CourseStudentRequestBatchHelperT.cs" />
     <Compile Include="CourseTeacherRequestFactory.cs" />
     <Compile Include="CourseTeacherRequestBatchHelperT.cs" />
+    <Compile Include="CustomerRequestFactory.cs" />
     <Compile Include="ManagedObjects\Keyword.cs" />
     <Compile Include="ManagedObjects\Location.cs" />
     <Compile Include="ManagedObjects\Gender.cs" />
@@ -88,8 +88,6 @@
     <Compile Include="Api\UserPatchRequest.cs" />
     <Compile Include="Api\UserUpdateRequest.cs" />
     <Compile Include="Api\UserGetRequest.cs" />
-    <Compile Include="Api\DomainListRequest.cs" />
-    <Compile Include="Api\DomainGetRequest.cs" />
     <Compile Include="Api\JsonNullStringConverter.cs" />
     <Compile Include="BaseClientServicePoolT.cs" />
     <Compile Include="GoogleGroup.cs" />
@@ -97,9 +95,6 @@
     <Compile Include="GroupRequestFactory.cs" />
     <Compile Include="GroupSettingsRequestFactory.cs" />
     <Compile Include="GoogleJsonSerializer.cs" />
-    <Compile Include="ManagedObjects\Domain.cs" />
-    <Compile Include="ManagedObjects\DomainAlias.cs" />
-    <Compile Include="ManagedObjects\DomainList.cs" />
     <Compile Include="ManagedObjects\Email.cs" />
     <Compile Include="ManagedObjects\GroupMembership.cs" />
     <Compile Include="ManagedObjects\GroupSettings.cs" />
@@ -140,38 +135,38 @@
     <None Include="Package\Lithnet.GoogleApps.nuspec" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="BouncyCastle.Crypto, Version=1.8.5.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
-      <HintPath>..\packages\BouncyCastle.1.8.5\lib\BouncyCastle.Crypto.dll</HintPath>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.9.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
+      <HintPath>..\packages\BouncyCastle.1.8.9\lib\BouncyCastle.Crypto.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Apis, Version=1.43.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.1.43.0\lib\net45\Google.Apis.dll</HintPath>
+    <Reference Include="Google.Apis, Version=1.55.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.1.55.0\lib\net45\Google.Apis.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Apis.Admin.Directory.directory_v1, Version=1.43.0.1736, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Admin.Directory.directory_v1.1.43.0.1736\lib\net45\Google.Apis.Admin.Directory.directory_v1.dll</HintPath>
+    <Reference Include="Google.Apis.Admin.Directory.directory_v1, Version=1.55.0.2602, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Admin.Directory.directory_v1.1.55.0.2602\lib\net45\Google.Apis.Admin.Directory.directory_v1.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Apis.Auth, Version=1.43.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Auth.1.43.0\lib\net45\Google.Apis.Auth.dll</HintPath>
+    <Reference Include="Google.Apis.Auth, Version=1.55.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Auth.1.55.0\lib\net45\Google.Apis.Auth.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Apis.Auth.PlatformServices, Version=1.43.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Auth.1.43.0\lib\net45\Google.Apis.Auth.PlatformServices.dll</HintPath>
+    <Reference Include="Google.Apis.Auth.PlatformServices, Version=1.55.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Auth.1.55.0\lib\net45\Google.Apis.Auth.PlatformServices.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Apis.Calendar.v3, Version=1.43.0.1837, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Calendar.v3.1.43.0.1837\lib\net45\Google.Apis.Calendar.v3.dll</HintPath>
+    <Reference Include="Google.Apis.Calendar.v3, Version=1.55.0.2590, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Calendar.v3.1.55.0.2590\lib\net45\Google.Apis.Calendar.v3.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Apis.Classroom.v1, Version=1.43.0.1845, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Classroom.v1.1.43.0.1845\lib\net45\Google.Apis.Classroom.v1.dll</HintPath>
+    <Reference Include="Google.Apis.Classroom.v1, Version=1.55.0.2597, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Classroom.v1.1.55.0.2597\lib\net45\Google.Apis.Classroom.v1.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Apis.Core, Version=1.43.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Core.1.43.0\lib\net45\Google.Apis.Core.dll</HintPath>
+    <Reference Include="Google.Apis.Core, Version=1.55.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Core.1.55.0\lib\net45\Google.Apis.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Apis.Gmail.v1, Version=1.43.0.1835, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Gmail.v1.1.43.0.1835\lib\net45\Google.Apis.Gmail.v1.dll</HintPath>
+    <Reference Include="Google.Apis.Gmail.v1, Version=1.55.0.2510, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Gmail.v1.1.55.0.2510\lib\net45\Google.Apis.Gmail.v1.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Apis.Groupssettings.v1, Version=1.43.0.1666, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Groupssettings.v1.1.43.0.1666\lib\net45\Google.Apis.Groupssettings.v1.dll</HintPath>
+    <Reference Include="Google.Apis.Groupssettings.v1, Version=1.55.0.2366, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Groupssettings.v1.1.55.0.2366\lib\net45\Google.Apis.Groupssettings.v1.dll</HintPath>
     </Reference>
-    <Reference Include="Google.Apis.PlatformServices, Version=1.43.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.1.43.0\lib\net45\Google.Apis.PlatformServices.dll</HintPath>
+    <Reference Include="Google.Apis.PlatformServices, Version=1.55.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.1.55.0\lib\net45\Google.Apis.PlatformServices.dll</HintPath>
     </Reference>
     <Reference Include="Google.GData.Client, Version=2.2.0.0, Culture=neutral, PublicKeyToken=04a59ca9b0273830, processorArchitecture=MSIL">
       <HintPath>..\packages\Google.GData.Client.2.2.0.0\lib\Google.GData.Client.dll</HintPath>
@@ -185,11 +180,11 @@
       <HintPath>..\packages\Google.GData.Extensions.2.2.0.0\lib\Google.GData.Extensions.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="log4net, Version=2.0.12.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
-      <HintPath>..\packages\log4net.2.0.12\lib\net45\log4net.dll</HintPath>
+    <Reference Include="log4net, Version=2.0.14.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.14\lib\net45\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.dll</HintPath>
