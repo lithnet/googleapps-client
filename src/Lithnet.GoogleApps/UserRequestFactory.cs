@@ -101,7 +101,7 @@ namespace Lithnet.GoogleApps
 
                 UserPatchRequest request = new UserPatchRequest(connection.Item, user, id);
 
-                request.ExecuteWithRetryOnBackoff();
+                request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
             }
         }
 
@@ -116,7 +116,7 @@ namespace Lithnet.GoogleApps
 
                 UserPatchRequest request = new UserPatchRequest(connection.Item, user, id);
 
-                request.ExecuteWithRetryOnBackoff();
+                request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
             }
         }
 

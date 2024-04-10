@@ -1,221 +1,53 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{F26EAC4C-F7F2-4AEC-916D-3923B2916DA3}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Lithnet.GoogleApps</RootNamespace>
-    <AssemblyName>Lithnet.GoogleApps</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup>
-    <RunPostBuildEvent>Always</RunPostBuildEvent>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="AggregateCourseTeacherUpdateException.cs" />
-    <Compile Include="AggregateCourseStudentUpdateException.cs" />
-    <Compile Include="AggregateGroupUpdateException.cs" />
-    <Compile Include="ApiExtensions.cs" />
-    <Compile Include="Api\RequestWrapper.cs" />
-    <Compile Include="Api\Enums\OrderByEnum.cs" />
-    <Compile Include="Api\Enums\ProjectionEnum.cs" />
-    <Compile Include="Api\Enums\SortOrderEnum.cs" />
-    <Compile Include="Api\Enums\ViewTypeEnum.cs" />
-    <Compile Include="Api\Enums\EventEnum.cs" />
-    <Compile Include="Api\GroupSettingsPatchRequest.cs" />
-    <Compile Include="Api\GroupSettingsUpdateRequest.cs" />
-    <Compile Include="Api\GroupSettingsGetRequest.cs" />
-    <Compile Include="Api\MakeAdminRequest.cs" />
-    <Compile Include="Api\UserUndeleteRequest.cs" />
-    <Compile Include="ClassroomRequestFactory.cs" />
-    <Compile Include="CourseStudentRequestBatchHelperT.cs" />
-    <Compile Include="CourseTeacherRequestFactory.cs" />
-    <Compile Include="CourseTeacherRequestBatchHelperT.cs" />
-    <Compile Include="CustomerRequestFactory.cs" />
-    <Compile Include="ManagedObjects\Keyword.cs" />
-    <Compile Include="ManagedObjects\Location.cs" />
-    <Compile Include="ManagedObjects\Gender.cs" />
-    <Compile Include="OrgUnitsRequestFactory.cs" />
-    <Compile Include="GoogleCourse.cs" />
-    <Compile Include="GoogleServiceCredentials.cs" />
-    <Compile Include="CourseStudentRequestFactory.cs" />
-    <Compile Include="ManagedObjects\CourseTeachers.cs" />
-    <Compile Include="ManagedObjects\CourseStudents.cs" />
-    <Compile Include="ManagedObjects\TypeObject.cs" />
-    <Compile Include="OAuthGDataRequestFactory.cs" />
-    <Compile Include="PoolT.cs" />
-    <Compile Include="PoolItemT.cs" />
-    <Compile Include="Constants.cs" />
-    <Compile Include="ManagedObjects\CustomTypeObject.cs" />
-    <Compile Include="Api\UserAliasDeleteRequest.cs" />
-    <Compile Include="Api\UserAliasInsertRequest.cs" />
-    <Compile Include="Api\UserAliasListRequest.cs" />
-    <Compile Include="Api\UserInsertRequest.cs" />
-    <Compile Include="Api\UserDeleteRequest.cs" />
-    <Compile Include="Api\NotesConverter.cs" />
-    <Compile Include="Api\EmptyListConverter.cs" />
-    <Compile Include="Api\UserListRequest.cs" />
-    <Compile Include="Api\UserPatchRequest.cs" />
-    <Compile Include="Api\UserUpdateRequest.cs" />
-    <Compile Include="Api\UserGetRequest.cs" />
-    <Compile Include="Api\JsonNullStringConverter.cs" />
-    <Compile Include="BaseClientServicePoolT.cs" />
-    <Compile Include="GoogleGroup.cs" />
-    <Compile Include="GroupMemberRequestFactory.cs" />
-    <Compile Include="GroupRequestFactory.cs" />
-    <Compile Include="GroupSettingsRequestFactory.cs" />
-    <Compile Include="GoogleJsonSerializer.cs" />
-    <Compile Include="ManagedObjects\Email.cs" />
-    <Compile Include="ManagedObjects\GroupMembership.cs" />
-    <Compile Include="ManagedObjects\GroupSettings.cs" />
-    <Compile Include="ManagedObjects\IIsEmptyObject.cs" />
-    <Compile Include="ManagedObjects\IPrimaryCandidateObject.cs" />
-    <Compile Include="ManagedObjects\ManagedObjectExtensions.cs" />
-    <Compile Include="ManagedObjects\Notes.cs" />
-    <Compile Include="ManagedObjects\Address.cs" />
-    <Compile Include="ManagedObjects\Organization.cs" />
-    <Compile Include="ManagedObjects\IM.cs" />
-    <Compile Include="ManagedObjects\User.cs" />
-    <Compile Include="ManagedObjects\MakeAdminParameters.cs" />
-    <Compile Include="ManagedObjects\UserAlias.cs" />
-    <Compile Include="ManagedObjects\UserAliases.cs" />
-    <Compile Include="ManagedObjects\UserList.cs" />
-    <Compile Include="ManagedObjects\UserName.cs" />
-    <Compile Include="ManagedObjects\UserUndeleteRequestParameters.cs" />
-    <Compile Include="ManagedObjects\Website.cs" />
-    <Compile Include="ManagedObjects\Relation.cs" />
-    <Compile Include="ManagedObjects\ExternalID.cs" />
-    <Compile Include="ManagedObjects\Phone.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RateLimiter.cs" />
-    <Compile Include="RetryEvents.cs" />
-    <Compile Include="SchemaRequestFactory.cs" />
-    <Compile Include="DomainsRequestFactory.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="TokenBucket.cs" />
-    <Compile Include="ResourcesRequestFactory.cs" />
-    <Compile Include="ChromeDeviceRequestFactory.cs" />
-    <Compile Include="UserRequestFactory.cs" />
-    <Compile Include="ContactRequestFactory.cs" />
-    <Compile Include="GmailServiceRequestFactory.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
-    <None Include="Package\Lithnet.GoogleApps.nuspec" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="BouncyCastle.Crypto, Version=1.8.9.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
-      <HintPath>..\packages\BouncyCastle.1.8.9\lib\BouncyCastle.Crypto.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis, Version=1.55.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.1.55.0\lib\net45\Google.Apis.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis.Admin.Directory.directory_v1, Version=1.55.0.2602, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Admin.Directory.directory_v1.1.55.0.2602\lib\net45\Google.Apis.Admin.Directory.directory_v1.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis.Auth, Version=1.55.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Auth.1.55.0\lib\net45\Google.Apis.Auth.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis.Auth.PlatformServices, Version=1.55.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Auth.1.55.0\lib\net45\Google.Apis.Auth.PlatformServices.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis.Calendar.v3, Version=1.55.0.2590, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Calendar.v3.1.55.0.2590\lib\net45\Google.Apis.Calendar.v3.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis.Classroom.v1, Version=1.55.0.2597, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Classroom.v1.1.55.0.2597\lib\net45\Google.Apis.Classroom.v1.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis.Core, Version=1.55.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Core.1.55.0\lib\net45\Google.Apis.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis.Gmail.v1, Version=1.55.0.2510, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Gmail.v1.1.55.0.2510\lib\net45\Google.Apis.Gmail.v1.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis.Groupssettings.v1, Version=1.55.0.2366, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Groupssettings.v1.1.55.0.2366\lib\net45\Google.Apis.Groupssettings.v1.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis.PlatformServices, Version=1.55.0.0, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.1.55.0\lib\net45\Google.Apis.PlatformServices.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.GData.Client, Version=2.2.0.0, Culture=neutral, PublicKeyToken=04a59ca9b0273830, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.GData.Client.2.2.0.0\lib\Google.GData.Client.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Google.GData.Contacts, Version=2.2.0.0, Culture=neutral, PublicKeyToken=7e065189dd4b982f, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.GData.Contacts.2.2.0.0\lib\Google.GData.Contacts.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Google.GData.Extensions, Version=2.2.0.0, Culture=neutral, PublicKeyToken=0b4c5df2ebf20876, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.GData.Extensions.2.2.0.0\lib\Google.GData.Extensions.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="log4net, Version=2.0.14.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
-      <HintPath>..\packages\log4net.2.0.14\lib\net45\log4net.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System">
-      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Net" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.XML" />
-    <Reference Include="Zlib.Portable">
-      <HintPath>..\packages\Zlib.Portable.Signed.1.11.0\lib\portable-net4+sl5+wp8+win8+wpa81+MonoTouch+MonoAndroid\Zlib.Portable.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>call %25BuildToolsPath%25\sign-and-save-symbols.bat $(TargetPath) $(TargetDir) $(ProjectName)
-call %25BuildToolsPath%25\pack-nuget.bat $(ProjectPath)</PostBuildEvent>
-  </PropertyGroup>
-  <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
-  </Target>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<Platforms>AnyCPU</Platforms>
+		<Deterministic>true</Deterministic>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<AssemblyTitle>Lithnet Google Workspace .NET Client</AssemblyTitle>
+		<Description>Lithnet Google Workspace .NET Client</Description>
+		<Company>Lithnet</Company>
+		<Copyright>Copyright © 2024 Lithnet Pty Ltd</Copyright>
+		<Product>Lithnet Google Workspace .NET Client</Product>
+		<VersionPrefix>2.0</VersionPrefix>
+		<Authors>Lithnet</Authors>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<AutoIncrementPackageRevision>true</AutoIncrementPackageRevision>
+		<IsPackable>true</IsPackable>
+		<PackageId>Lithnet.GoogleApps</PackageId>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryUrl>https://github.com/lithnet/googleapps-client</RepositoryUrl>
+		<SupportUrl>https://github.com/lithnet/googleapps-client</SupportUrl>
+		<PackageOutputPath>D:\dev\nuget\packages</PackageOutputPath>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Google.Apis.Admin.Directory.directory_v1" Version="1.55.0.2602" />
+		<PackageReference Include="Google.Apis.Calendar.v3" Version="1.55.0.2590" />
+		<PackageReference Include="Google.Apis.Classroom.v1" Version="1.55.0.2597" />
+		<PackageReference Include="Google.Apis.Gmail.v1" Version="1.55.0.2510" />
+		<PackageReference Include="Google.Apis.Groupssettings.v1" Version="1.55.0.2366" />
+		<PackageReference Include="Google.GData.Contacts" Version="2.2.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+	<ItemGroup>
+		<Reference Include="System.Configuration" />
+		<Reference Include="System.Net" />
+		<Reference Include="System.Web" />
+		<Reference Include="System.XML" />
+	</ItemGroup>
 </Project>
