@@ -38,7 +38,7 @@
 		<PackageReference Include="Google.Apis.Gmail.v1" Version="1.55.0.2510" />
 		<PackageReference Include="Google.Apis.Groupssettings.v1" Version="1.55.0.2366" />
 		<PackageReference Include="Google.GData.Contacts" Version="2.2.0.0" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

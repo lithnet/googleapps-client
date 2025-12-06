@@ -28,7 +28,7 @@ namespace Lithnet.GoogleApps
             });
         }
 
-        public IEnumerable<ContactEntry> GetContacts(string domain)
+        public IEnumerable<ContactEntry> GetContacts(string domain, int pageSize = 1000)
         {
             using (PoolItem<ContactsService> connection = this.contactsServicePool.Take())
             {
@@ -38,7 +38,7 @@ namespace Lithnet.GoogleApps
                 {
                     ContactsQuery request = new ContactsQuery(uri)
                     {
-                        NumberToRetrieve = 1000
+                        NumberToRetrieve = pageSize
                     };
 
                     ContactsFeed result = ApiExtensions.InvokeWithRateLimit(() => connection.Item.Query(request), this.serviceName);
