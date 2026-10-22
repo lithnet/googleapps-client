@@ -22,6 +22,7 @@ namespace Lithnet.GoogleApps
         BackoffNotFound = Backoff | NotFound,
         BackoffOAuthNotFound = Backoff | OAuthImpersonationError | NotFound,
         BackoffNotFoundUserCreationIncomplete = Backoff | NotFound | UserCreationIncomplete,
+        BackoffUserCreationIncomplete = Backoff | UserCreationIncomplete,
 
     }
 }

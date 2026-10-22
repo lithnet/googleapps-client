@@ -125,7 +125,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 UserDeleteRequest request = new UserDeleteRequest(connection.Item, id);
-                request.ExecuteWithRetryOnBackoff();
+                request.ExecuteWithRetry(RetryEvents.BackoffUserCreationIncomplete);
             }
         }
 
@@ -224,7 +224,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Ignore))
             {
                 UserPatchRequest request = new UserPatchRequest(connection.Item, item, userKey);
-                return request.ExecuteWithRetryOnBackoff();
+                return request.ExecuteWithRetry(RetryEvents.BackoffUserCreationIncomplete);
             }
         }
 
@@ -238,7 +238,7 @@ namespace Lithnet.GoogleApps
             using (PoolItem<DirectoryService> connection = this.directoryServicePool.Take(NullValueHandling.Include))
             {
                 UserUpdateRequest request = new UserUpdateRequest(connection.Item, item, userKey);
-                return request.ExecuteWithRetryOnBackoff();
+                return request.ExecuteWithRetry(RetryEvents.BackoffUserCreationIncomplete);
             }
         }
 
@@ -280,7 +280,7 @@ namespace Lithnet.GoogleApps
             {
                 UserAliasDeleteRequest request = new UserAliasDeleteRequest(connection.Item, id, existingAlias);
 
-                request.ExecuteWithRetryOnBackoff();
+                request.ExecuteWithRetry(RetryEvents.BackoffUserCreationIncomplete);
             }
         }
     }
