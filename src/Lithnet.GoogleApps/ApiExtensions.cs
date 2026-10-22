@@ -98,6 +98,7 @@ namespace Lithnet.GoogleApps
                                          || policy.HasFlag(RetryEvents.OAuthImpersonationError) && ApiExtensions.ShouldRetryOnOAuthError(ex)
                                          || policy.HasFlag(RetryEvents.BadRequest) && ApiExtensions.ShouldRetryOnBadRequest(ex)
                                          || policy.HasFlag(RetryEvents.Aborted) && ApiExtensions.ShouldRetryOnAborted(ex)
+                                         || policy.HasFlag(RetryEvents.UserCreationIncomplete) && ApiExtensions.ShouldRetryOnUserCreationIncomplete(ex)
                                          || policy.HasFlag(RetryEvents.Timeout) && ApiExtensions.ShouldRetryOnTimeout(ex);
 
             return request.ExecuteWithRetry((Func<Exception, bool>) Result, retryAttempts, consumeTokens);
@@ -330,6 +331,38 @@ namespace Lithnet.GoogleApps
             return false;
         }
 
+        // Mutate calls made immediately after users.insert can fail with 412 conditionNotMet and the message
+        // "User creation is not complete." while the new user propagates through Google's backend. Google's
+        // users.insert documentation says to check for this message and retry after some time. Other 412
+        // errors (such as a genuine ETag mismatch) are not retried.
+        private static bool ShouldRetryOnUserCreationIncomplete(Exception e)
+        {
+            if (e is Google.GoogleApiException ex)
+            {
+                Trace.WriteLine($"Google API request error - {ex.Error?.Code} {ex.Error?.Message}");
 
+                if (ex.HttpStatusCode != HttpStatusCode.PreconditionFailed)
+                {
+                    return false;
+                }
+
+                if (ex.Error == null || ex.Error.Errors == null)
+                {
+                    return false;
+                }
+
+                foreach (SingleError error in ex.Error.Errors)
+                {
+                    if (string.Equals(error.Reason, "conditionNotMet", StringComparison.OrdinalIgnoreCase) &&
+                        error.Message != null &&
+                        error.Message.IndexOf("User creation is not complete", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
     }
 }

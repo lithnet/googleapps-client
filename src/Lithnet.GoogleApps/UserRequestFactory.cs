@@ -101,7 +101,7 @@ namespace Lithnet.GoogleApps
 
                 UserPatchRequest request = new UserPatchRequest(connection.Item, user, id);
 
-                request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
+                request.ExecuteWithRetry(RetryEvents.BackoffNotFoundUserCreationIncomplete);
             }
         }
 
@@ -116,7 +116,7 @@ namespace Lithnet.GoogleApps
 
                 UserPatchRequest request = new UserPatchRequest(connection.Item, user, id);
 
-                request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
+                request.ExecuteWithRetry(RetryEvents.BackoffNotFoundUserCreationIncomplete);
             }
         }
 
@@ -215,7 +215,7 @@ namespace Lithnet.GoogleApps
             {
                 MakeAdminRequest request = new MakeAdminRequest(connection.Item, isAdmin, userKey);
 
-                request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
+                request.ExecuteWithRetry(RetryEvents.BackoffNotFoundUserCreationIncomplete);
             }
         }
 
@@ -270,7 +270,7 @@ namespace Lithnet.GoogleApps
 
                 UserAliasInsertRequest request = new UserAliasInsertRequest(connection.Item, alias, id);
 
-                request.ExecuteWithRetry(RetryEvents.BackoffNotFound);
+                request.ExecuteWithRetry(RetryEvents.BackoffNotFoundUserCreationIncomplete);
             }
         }
 

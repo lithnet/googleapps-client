@@ -16,10 +16,12 @@ namespace Lithnet.GoogleApps
         BadRequest = 8,
         Timeout = 16,
         Aborted = 32,
+        UserCreationIncomplete = 64,
 
         BackoffOAuth = Backoff | OAuthImpersonationError,
         BackoffNotFound = Backoff | NotFound,
         BackoffOAuthNotFound = Backoff | OAuthImpersonationError | NotFound,
+        BackoffNotFoundUserCreationIncomplete = Backoff | NotFound | UserCreationIncomplete,
 
     }
 }
